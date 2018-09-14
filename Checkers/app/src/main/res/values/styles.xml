@@ -5,4 +5,55 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <style name="BoardRow">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+    </style>
+
+    <style name="BaseSquare">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:padding">0dp</item>
+        <item name="android:scaleType">fitXY</item>
+        <item name="android:adjustViewBounds">true</item>
+        <item name="android:layout_weight">1</item>
+    </style>
+
+    <style name="WhiteSquare" parent="BaseSquare">
+        <item name="android:src">@drawable/white_square</item>
+    </style>
+    <style name="BlackSquare" parent="BaseSquare">
+        <item name="android:src">@drawable/black_square</item>
+    </style>
+    <style name="WhiteDraught" parent="BaseSquare">
+        <item name="android:src">@drawable/white_draught</item>
+    </style>
+    <style name="BlackDraught" parent="BaseSquare">
+        <item name="android:src">@drawable/black_draught</item>
+    </style>
+    
+    <style name="BoardLeftRightBorder">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:padding">0dp</item>
+        <item name="android:scaleType">fitXY</item>
+        <item name="android:adjustViewBounds">true</item>
+        <item name="android:src">@drawable/board_left_right_border</item>
+    </style>
+
+    <style name="BoardTopBottomtBorder">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:padding">0dp</item>
+        <item name="android:scaleType">fitXY</item>
+        <item name="android:adjustViewBounds">true</item>
+    </style>
+
+    <style name="BoardTopBorder" parent="BoardTopBottomtBorder">
+        <item name="android:src">@drawable/board_top_border</item>
+    </style>
+    <style name="BoardBottomBorder" parent="BoardTopBottomtBorder">
+        <item name="android:src">@drawable/board_bottom_border</item>
+    </style>
 </resources>

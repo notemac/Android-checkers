@@ -11,17 +11,17 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ib = findViewById(R.id.imageButton12);
-        ib.setOnClickListener(this);
+        //ib = findViewById(R.id.imageButton12);
+        //ib.setOnClickListener(this);
     }
 
     @Override
     public void onClick(View v) {
-        switch (v.getId())
+        /*switch (v.getId())
         {
             case R.id.imageButton12:
                 ib.setImageResource(R.drawable.c116);
                 break;
-        }
+        }*/
     }
 }
