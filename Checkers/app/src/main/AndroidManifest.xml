@@ -16,7 +16,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity android:name=".GameActivity"></activity>
+
+        <activity android:name=".PreferencesActivity"
+            android:label="@string/label_PreferencesActivity">
+        </activity>
     </application>
 
 </manifest>

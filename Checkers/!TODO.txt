@@ -1,0 +1,2 @@
+SETTINGS
+1) Обрабатываем измененные настройки в методе OnActivityForResult или в методе OnResumed после закрытия SettingsActivity.

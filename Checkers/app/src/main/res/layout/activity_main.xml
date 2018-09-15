@@ -5,6 +5,11 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
+    <Spinner
+        android:id="@+id/spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <ImageButton
         android:id="@+id/board_top_border"
         style="@style/BoardTopBorder"/>

@@ -1,3 +1,30 @@
 <resources>
+    <!-- MANIFEST -->
     <string name="app_name">Checkers</string>
+    <string name="label_PreferencesActivity">Settings</string>
+    <!-- draughts_set_preference -->
+    <string name="text_tv_dsp_title">Draughts</string>
+    <string name="text_tv_dsp_summary">Brown-White set</string>
+    <string name="title_draughts_set_preference">Choose draughts set</string>
+    <!-- MENU -->
+    <string name="action_settings">Settings</string>
+
+
+
+    <!--Имя дефолтной иконки для отображения в ListPreferences-->
+    <string name="default_icon_file">draughts_set1</string>
+    <!--Ключ (имя иконки) для доступа к имени файла выбранной иконки в настройках приложения-->
+    <string name="custom_icon_key">customIconKey</string>
+
+
+    <!--Список имен иконок (т.е. ключи entries) -->
+    <string-array name="iconNames">
+        <item>Brown-White set</item>
+        <item>Black-White set</item>
+    </string-array>
+    <!--Список имен файлов иконок (т.е. значения entryValues)-->
+    <string-array name="iconFiles">
+        <item>draughts_set1</item>
+        <item>draughts_set2</item>
+    </string-array>
 </resources>

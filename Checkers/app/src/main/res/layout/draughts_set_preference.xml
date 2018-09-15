@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/tv_dsp_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/text_tv_dsp_title"
+        android:textAppearance="?android:attr/textAppearanceListItem"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_dsp_summary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="@string/text_tv_dsp_summary"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_dsp_title" />
+
+    <ImageView
+        android:id="@+id/ii_dsp_iconImageSelected"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:layout_marginEnd="6dp"
+        android:layout_marginTop="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</android.support.constraint.ConstraintLayout>
+
+    <!-- <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="6dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="6dp"
+        android:paddingTop="6dp">
+
+        <TextView
+            android:id="@+id/title123"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:text="Draughts"
+            android:textAppearance="?android:attr/textAppearanceListItem"
+            tools:layout_editor_absoluteX="7dp"
+            tools:layout_editor_absoluteY="2dp" />
+
+
+        <TextView
+            android:id="@+id/summary123"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@id/title123"
+            android:layout_below="@id/title123"
+            android:layout_centerVertical="true"
+            android:text="@string/default_summary"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            tools:layout_editor_absoluteX="0dp"
+            tools:layout_editor_absoluteY="40dp" />
+
+        <ImageView
+            android:id="@+id/iconSelected"
+            android:layout_width="76dp"
+            android:layout_height="26dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            tools:layout_editor_absoluteX="273dp"
+            tools:layout_editor_absoluteY="24dp"
+
+     </RelativeLayout> -->
+
+
+

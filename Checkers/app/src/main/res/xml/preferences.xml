@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res/ru.bstu.checkers">
+
+    <!-- <PreferenceCategory android:title="Icon Picker" > -->
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="sound_switch_preference"
+            android:title="Sound"
+            android:summaryOn="Sound on"
+            android:summaryOff = "Sound off"/>
+
+        <ru.bstu.checkers.DraughtsSetPreferenceEngine
+            android:entries="@array/iconNames"
+            android:entryValues="@array/iconFiles"
+            android:key="@string/custom_icon_key"
+            android:layout="@layout/draughts_set_preference"
+            android:title="@string/title_draughts_set_preference" />
+    <!-- </PreferenceCategory> -->
+
+ </PreferenceScreen>
