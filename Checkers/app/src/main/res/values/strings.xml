@@ -2,14 +2,19 @@
     <!-- MANIFEST -->
     <string name="app_name">Checkers</string>
     <string name="label_PreferencesActivity">Settings</string>
-    <!-- draughts_set_preference -->
+    <!-- draughts_set_preference.xml -->
     <string name="text_tv_dsp_title">Draughts</string>
     <string name="text_tv_dsp_summary">Brown-White set</string>
     <string name="title_draughts_set_preference">Choose draughts set</string>
     <!-- MENU -->
-    <string name="action_settings">Settings</string>
+    <string name="text_tv_menu_newgame">New game</string>
+    <string name="text_tv_menu_loadgame">Load game</string>
+    <string name="text_tv_menu_settings">Settings</string>
+    <string name="text_tv_menu_exitgame">Exit</string>
 
-
+    <!-- activity_game.xml -->
+    <string name="text_tv_player1_name">Player 1</string>
+    <string name="text_tv_player2_name">Player 2</string>
 
     <!--Имя дефолтной иконки для отображения в ListPreferences-->
     <string name="default_icon_file">draughts_set1</string>
