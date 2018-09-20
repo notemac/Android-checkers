@@ -11,7 +11,11 @@
     <string name="text_tv_menu_loadgame">Load game</string>
     <string name="text_tv_menu_settings">Settings</string>
     <string name="text_tv_menu_exitgame">Exit</string>
-
+    <!-- ACTION BAR -->
+    <string name="actionbar_backmove">Back move</string>
+    <string name="actionbar_settings">Settings</string>
+    <string name="actionbar_savegame">Save game</string>
+    <string name="actionbar_exitgame">Exit game</string>
     <!-- activity_game.xml -->
     <string name="text_tv_player1_name">Player 1</string>
     <string name="text_tv_player2_name">Player 2</string>

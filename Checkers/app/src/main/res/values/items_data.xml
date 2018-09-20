@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <array name="a8">
+        <item>0</item>
+        <item>"123"</item>
+    </array>
+    <integer-array name="asf">
+        <item>@+id/menu_newgame</item>
+    </integer-array>
+</resources>

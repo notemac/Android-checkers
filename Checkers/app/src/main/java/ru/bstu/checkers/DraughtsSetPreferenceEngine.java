@@ -184,10 +184,8 @@ public class DraughtsSetPreferenceEngine extends ListPreference {
      * */
     @Override
     protected void onPrepareDialogBuilder(Builder builder) {
-
         builder.setNegativeButton("Cancel", null);
         builder.setPositiveButton(null, null);
-
         iconNames = getEntries();
         iconFiles = getEntryValues();
 
