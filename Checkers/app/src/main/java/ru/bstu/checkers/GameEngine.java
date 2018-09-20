@@ -1,5 +1,9 @@
 package ru.bstu.checkers;
 
+import android.graphics.drawable.Drawable;
+import android.view.Window;
+import android.widget.ImageButton;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -12,10 +16,14 @@ import ru.bstu.checkers.Item.ITEM_TYPE;
 
 public class GameEngine {
    enum TURN {black, white};
-   /** Item, на который кликнули */
-   public static Item selectedItem = null;
+   /** Item, на который кликнули первый раз*/
+   public static Item selectedFirstItem = null;
    /** Надо бить? (Бить обязательно)*/
    public static boolean isJump = false;
+    /** За текущий ход какую-нибудь шашку уже забирали?*/
+    public static boolean isAfterJump = false;
+    /** Список шашек, которые были побиты за текущий ход*/
+    public static LinkedList<Item> itemsOutOfPlayPerMove;
     /** Есть куда ходить? (Если нечего бить)*/
     public static boolean isMove = false;
     /** Шашка выбрана, необходимо сделать ход/побить (т.е. клинуть второй раз)*/
@@ -30,10 +38,23 @@ public class GameEngine {
     * всегда шашка; все остальные элементы - клетки, куда может пойти эта шашка.*/
    public static ArrayList<LinkedList<Item>> moves;
    /** Список из списков с ходами, куда шашка может побить. Первый элемент списка всегда бьющая шашка;
-    *  второй - шашка, которая под боем; все остальные элементы - клетки, где может оказаться бьющая шашка после битья.*/
+    *  второй - шашка, которая под боем; все остальные элементы - клетки, где может оказаться бьющая шашка после битья.
+    *  Т.о. если шашка может бить одновременно в разные стороны, то для нее будет создано два списка,
+    *  в которых первым элементом будет эта шашка.*/
    public static LinkedList<LinkedList<Item>> jumps;
 
+   private static void SwapWays(boolean[] ways1, boolean[] ways2)
+   {
+       for(int i = 0; i < ways1.length; ++i)
+       {
+           boolean tmp = ways1[i];
+           ways1[i] = ways2[i];
+           ways2[i] = tmp;
+       }
+   }
+
    public static void Init() {
+        itemsOutOfPlayPerMove = new LinkedList<Item>();
         moves = new ArrayList<LinkedList<Item>>(DRAUGHTS_COUNT);
         jumps = new LinkedList<LinkedList<Item>>();
         Item[] items = new Item[DRAUGHTS_COUNT*2 + 4*6 + 16];// 64 клетки
@@ -282,72 +303,152 @@ public class GameEngine {
         jumps.add(items);
     }
 
-   /**Проверяем, надо ли бить*/
-   public static void SearchForMoves()
+   /** Ищем все возможные ходы (надо бить или ходить)*/
+   public static void SearchForAllMoves()
    {
-       isJump = isMove = false;
+       // Если игрок продолжает бить, то return. Т.к. ходы уже найдены с помощью вызова метода
+       // SearchForJumps(Item item) для бьющей шашки item в конце метода Jump(int id, Window window)
+       if (isJump) return;
+
+       //isJump = isMove = false;
        for(int i = 0; i < ways.length; ++i)
        {
            //Проходим по текущей диагонали
            int way_size = ways[i].size();
            for(int j = 0; j < way_size; ++j)
            {
-               ITEM_TYPE itemType = ways[i].get(j).type;
-                //Если цвет БЕЛОЙ шашки(1) совпадает с очередью хода
-                if ((itemType == turn) && (itemType == ITEM_TYPE.white))
+                ITEM_TYPE itemType = ways[i].get(j).type;
+                if (itemType == turn)
                 {
-                    // Ищем комбинацию «шашка(1) - шашка (2) - пустое поле»
-                    if (j+1 != way_size)// На диагонали после текущей шашки(1) имеются еще шашки или клетки?
+                    if (itemType == ITEM_TYPE.white)//Если цвет БЕЛОЙ шашки(w) совпадает с очередью хода
                     {
-                        ITEM_TYPE nextItemType = ways[i].get(j+1).type;
-                        // Далее находится шашка(2)?
-                        if ((itemType != nextItemType) && (nextItemType != ITEM_TYPE.square))
+                        // Ищем комбинацию «шашка(w) - шашка (b) - пустое поле» (движемся вперед по диагонали)
+                        if (j + 1 != way_size)// На диагонали после текущей шашки(w) имеются еще шашки или клетки?
                         {
-                            // После шашки(2) находится клетка?
-                            if ((j+2 != way_size) && (ways[i].get(j+2).type == ITEM_TYPE.square))
-                            {
-                                AddJump(ways[i].get(j), ways[i].get(j+1), ways[i].get(j+2));
-                                isJump = true; isMove = false;
+                            ITEM_TYPE nextItemType = ways[i].get(j + 1).type;
+                            // Далее находится шашка(b)?
+                            if ((itemType != nextItemType) && (nextItemType != ITEM_TYPE.square)) {
+                                // После шашки(b) находится клетка?
+                                if ((j + 2 != way_size) && (ways[i].get(j + 2).type == ITEM_TYPE.square)) {
+                                    AddJump(ways[i].get(j), ways[i].get(j + 1), ways[i].get(j + 2));
+                                    isJump = true;
+                                    isMove = false;
+                                }
+                            }
+                            // Иначе далее находится клетка?
+                            else if (nextItemType == ITEM_TYPE.square) {
+                                // Добавляем возможные ходы, только если не надо бить
+                                if (isJump == false) {
+                                    AddMove(ways[i].get(j), ways[i].get(j + 1));
+                                    isMove = true;
+                                }
                             }
                         }
-                        // Иначе далее находится клетка?
-                        else if (nextItemType == ITEM_TYPE.square)
+                        // Ищем комбинацию «шашка(w) - шашка (b) - пустое поле» (движемся назад по диагонали)
+                        if (j - 1 >= 0)// На диагонали перед текущей шашкой(w) имеются еще шашки или клетки?
                         {
-                            // Добавляем возможные ходы, только если не надо бить
-                            if (isJump == false) {
-                                AddMove(ways[i].get(j), ways[i].get(j + 1));
-                                isMove = true;
+                            ITEM_TYPE prevItemType = ways[i].get(j - 1).type;
+                            // Сзади находится шашка(b)?
+                            if ((itemType != prevItemType) && (prevItemType != ITEM_TYPE.square)) {
+                                // Перед шашкой(b) находится клетка?
+                                if ((j - 2 >= 0) && (ways[i].get(j - 2).type == ITEM_TYPE.square)) {
+                                    AddJump(ways[i].get(j), ways[i].get(j - 1), ways[i].get(j - 2));
+                                    isJump = true; isMove = false;
+                                }
+                            }
+                            // Иначе сзади находится клетка?
+                            else if (prevItemType == ITEM_TYPE.square) {
+                                //TODO: только дамки могут ходить назад для белых
+                                //AddMove(ways[i].get(j), ways[i].get(j-1));
                             }
                         }
-                    }
-                    // Ищем комбинацию «пустое поле — шашка(2) — шашка (1)»
-                    else if (j-1 >= 0)// На диагонали перед текущей шашкой(1) имеются еще шашки или клетки?
-                    {
-                        ITEM_TYPE prevItemType = ways[i].get(j-1).type;
-                        // Сзади находится шашка(2)?
-                        if ((itemType != prevItemType) && (prevItemType != ITEM_TYPE.square))
+                    }//Иначе ход ЧЕРНЫХ(шашка b)
+                    else {
+                        // Ищем комбинацию «шашка (b) — шашка(w) — пустое поле» (движемся вперед по диагонали)
+                        if (j + 1 != way_size)// На диагонали после текущей шашки(b) имеются еще шашки или клетки?
                         {
-                            // Перед шашкой(2) находится клетка?
-                            if ((j-2 >= 0) && (ways[i].get(j-2).type == ITEM_TYPE.square))
-                            {
-                                AddJump(ways[i].get(j), ways[i].get(j-1), ways[i].get(j-2));
-                                isJump = true; isMove = false;
+                            ITEM_TYPE nextItemType = ways[i].get(j + 1).type;
+                            // Далее находится шашка(w)?
+                            if ((itemType != nextItemType) && (nextItemType != ITEM_TYPE.square)) {
+                                // После шашки(w) находится клетка?
+                                if ((j + 2 != way_size) && (ways[i].get(j + 2).type == ITEM_TYPE.square)) {
+                                    AddJump(ways[i].get(j), ways[i].get(j + 1), ways[i].get(j + 2));
+                                    isJump = true; isMove = false;
+                                }
+                            }
+                            // Иначе далее находится клетка?
+                            else if (nextItemType == ITEM_TYPE.square) {
+                                //TODO: только дамки могут ходить назад для черных
+                                //AddMove(ways[i].get(j), ways[i].get(j+1));
                             }
                         }
-                        // Иначе сзади находится клетка?
-                        else if (prevItemType == ITEM_TYPE.square)
+                        // Ищем комбинацию «шашка (b) — шашка(w) — пустое поле» (движемся назад по диагонали)
+                        if (j - 1 >= 0)// На диагонали перед текущей шашкой(b) имеются еще шашки или клетки?
                         {
-                            //TODO: только дамки могут ходить назад для белых
-                            //AddMove(ways[i].get(j), ways[i].get(j-1));
+                            ITEM_TYPE prevItemType = ways[i].get(j - 1).type;
+                            // Сзади находится шашка(w)?
+                            if ((itemType != prevItemType) && (prevItemType != ITEM_TYPE.square)) {
+                                // Перед шашкой(w) находится клетка?
+                                if ((j - 2 >= 0) && (ways[i].get(j - 2).type == ITEM_TYPE.square)) {
+                                    AddJump(ways[i].get(j), ways[i].get(j - 1), ways[i].get(j - 2));
+                                    isJump = true; isMove = false;
+                                }
+                            }
+                            // Иначе сзади находится клетка?
+                            else if (prevItemType == ITEM_TYPE.square) {
+                                // Добавляем возможные ходы, только если не надо бить
+                                if (isJump == false) {
+                                    AddMove(ways[i].get(j), ways[i].get(j - 1));
+                                    isMove = true;
+                                }
+                            }
                         }
                     }
                 }
-                //TODO: else { //Если цвет ЧЕРНОЙ шашки(1) совпадает с очередью хода}
            }
        }
    }
 
-    /** Игрок кликнул на свою шашку? Если да, запомним ее как selectedItem*/
+    /** Ищем ходы, куда шашка item может побить далее*/
+    private static void SearchForJumps(Item item)
+    {
+        for (int i = 0; i < Item.WAYS_COUNT; ++i)
+        {
+            if (item.ways[i])
+            {
+                //Проходим по текущей диагонали
+                int way_size = ways[i].size();
+                int j = ways[i].indexOf(item); //Индекс шашки item на этой диагонали
+                // Ищем комбинацию «шашка(1) - шашка (2) - пустое поле» (движемся вперед по диагонали)
+                if (j + 1 != way_size)// На диагонали после текущей шашки(w) имеются еще шашки или клетки?
+                {
+                    ITEM_TYPE nextItemType = ways[i].get(j + 1).type;
+                    // Далее находится шашка(2)?
+                    if ((item.type != nextItemType) && (nextItemType != ITEM_TYPE.square)) {
+                        // После шашки(2) находится клетка?
+                        if ((j + 2 != way_size) && (ways[i].get(j + 2).type == ITEM_TYPE.square)) {
+                            AddJump(ways[i].get(j), ways[i].get(j + 1), ways[i].get(j + 2));
+                            isJump = true;
+                        }
+                    }
+                }
+                // Ищем комбинацию «шашка(1) - шашка (2) - пустое поле» (движемся назад по диагонали)
+                if (j - 1 >= 0)// На диагонали перед текущей шашкой(w) имеются еще шашки или клетки?
+                {
+                    ITEM_TYPE prevItemType = ways[i].get(j - 1).type;
+                    // Сзади находится шашка(2)?
+                    if ((item.type != prevItemType) && (prevItemType != ITEM_TYPE.square)) {
+                        // Перед шашкой(2) находится клетка?
+                        if ((j - 2 >= 0) && (ways[i].get(j - 2).type == ITEM_TYPE.square)) {
+                            AddJump(ways[i].get(j), ways[i].get(j - 1), ways[i].get(j - 2));
+                            isJump = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+/** Игрок кликнул на свою шашку? Если да, запомним ее как selectedItem*/
     public static boolean CheckTurn(int id)
     {
         for (int i = 0; i < ways.length; ++i)
@@ -360,7 +461,7 @@ public class GameEngine {
                 {
                     if (item.type == turn)
                     {
-                        selectedItem = item;
+                        selectedFirstItem = item;
                         return true;
                     }
                     else return false;
@@ -371,45 +472,111 @@ public class GameEngine {
         return false;
     }
 
-    /** Выбранная шашка selectedItem может бить?*/
+    /** Выбранная шашка selectedFirstItem может бить?*/
     public static boolean CheckJump()
     {
         for (int i = 0; i < jumps.size(); ++i)
         {
-            if (jumps.get(i).get(0).id == selectedItem.id)
+            if (jumps.get(i).get(0).id == selectedFirstItem.id)
                 return true;
         }
         return false;
     }
 
-    /** Выбранная шашка selectedItem может ходить?*/
+    /** Выбранная шашка selectedFirstItem может ходить?*/
     public static boolean CheckMove()
     {
         for (int i = 0; i < moves.size(); ++i)
         {
-            if (moves.get(i).get(0).id == selectedItem.id)
+            if (moves.get(i).get(0).id == selectedFirstItem.id)
                 return true;
         }
         return false;
     }
 
-    /** Можем сделать ход выбранной шашкой selectedItem на клетку с идентификатором id?*/
-    public static boolean Move(int id)
+    /** Бьем выбранной шашкой selectedItem на клетку с идентификатором id.
+     * Если шашка не может бить на эту клетку, то ничего не происходит.*/
+    public static boolean Jump(int id, Window window)
+    {
+        for (int i = 0; i < jumps.size(); ++i)
+        {
+            LinkedList<Item> items = jumps.get(i);
+            if (items.get(0).id == selectedFirstItem.id)
+            {
+                for (int j = 2; j < items.size(); ++j)
+                {
+                    if (items.get(j).id == id)
+                    {
+                        // Перемещаем шашку на экране
+                        ImageButton from = window.findViewById(selectedFirstItem.id);
+                        ImageButton middle = window.findViewById(items.get(1).id);
+                        ImageButton to = window.findViewById(id);
+                        Drawable d = from.getDrawable();
+                        from.setImageDrawable(to.getDrawable());
+                        to.setImageDrawable(d);
+                        middle.setImageDrawable(from.getDrawable());
+
+                        // Произведено взятие
+                        //isAfterJump = true;
+                        //itemsOutOfPlayPerMove.add(items.get(1));// Добавим побитую шашку в список
+                        isJump = isMove = isNeedSecondClick =  false;
+                        //turn = (turn == ITEM_TYPE.white ? ITEM_TYPE.black : ITEM_TYPE.white);
+                        items.get(j).type = selectedFirstItem.type;
+                        items.get(1).type = ITEM_TYPE.square;
+                        selectedFirstItem.type = ITEM_TYPE.square;
+                        moves.clear(); jumps.clear();
+                        selectedFirstItem = null;
+                        SearchForJumps(items.get(j));
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Делаем ход выбранной шашкой selectedItem на клетку с идентификатором id.
+     * Если сделали ход, то передаем очередь хода другому игроку.
+     * Если шашка не может ходить на эту клетку, то ничего не происходит.*/
+    public static boolean Move(int id, Window window)
     {
         for (int i = 0; i < moves.size(); ++i)
         {
             LinkedList<Item> items = moves.get(i);
-            if (items.get(0).id == selectedItem.id)
+            if (items.get(0).id == selectedFirstItem.id)
             {
                 for (int j = 1; j < items.size(); ++j)
                 {
-                    if (items.get(j).id == id)
+                    Item toItem = items.get(j);
+                    if (toItem.id == id)// Можем ходить на клетку с идентификатором id?
+                    {
+                        // Перемещаем шашку на экране
+                        ImageButton from = window.findViewById(selectedFirstItem.id);
+                        ImageButton to = window.findViewById(id);
+                        Drawable d = from.getDrawable();
+                        from.setImageDrawable(to.getDrawable());
+                        to.setImageDrawable(d);
+
+                        // Очередь хода игрока 2
+                        isJump = isMove = isNeedSecondClick =  false;
+                        toItem.type = selectedFirstItem.type;
+                        selectedFirstItem.type = ITEM_TYPE.square;
+                        moves.clear(); jumps.clear();
+                        selectedFirstItem = null;
                         return true;
+                    }
                 }
                 return false;
             }
         }
         // Сюда никогда не попадем
         return false;
+    }
+
+    /** Изменить очередь хода при необходимости*/
+    public static void NextTurn()
+    {
+        if (!isJump) // Если бить больше нечего, меняем очередь хода
+            GameEngine.turn = (GameEngine.turn == Item.ITEM_TYPE.white ? Item.ITEM_TYPE.black : Item.ITEM_TYPE.white);
     }
 }

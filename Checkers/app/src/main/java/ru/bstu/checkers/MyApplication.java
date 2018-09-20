@@ -18,6 +18,6 @@ public final class MyApplication extends Application {
         instance = this;
 
         GameEngine.Init();
-        GameEngine.SearchForMoves();
+        GameEngine.SearchForAllMoves();
     }
 }

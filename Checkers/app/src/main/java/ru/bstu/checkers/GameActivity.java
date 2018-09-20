@@ -68,17 +68,19 @@ public class GameActivity extends Activity implements View.OnClickListener{
         {
             if (GameEngine.isJump)
             {
-
+                if (GameEngine.Jump(id, getWindow()))
+                {
+                    GameEngine.NextTurn();
+                    // Если надо бить еще, бьем дальше. Иначе ищутся ходы для другого игрока
+                    GameEngine.SearchForAllMoves();
+                }
             }
             else // Надо ходить
             {
-                if (GameEngine.Move(id))
+                if (GameEngine.Move(id, getWindow()))
                 {
-                    ImageButton from = findViewById(GameEngine.selectedItem.id);
-                    ImageButton to = (ImageButton) v;
-                    Drawable d = to.getDrawable();
-                    to.setImageDrawable(from.getDrawable());
-                    from.setImageDrawable(d);
+                    GameEngine.NextTurn();
+                    GameEngine.SearchForAllMoves();// Игрок сделал ход, теперь ищем ходы для другого игрока
                 }
             }
         }
