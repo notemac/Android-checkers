@@ -7,6 +7,7 @@ public class Item {
     /** Количество диагоналей */
     public static final int WAYS_COUNT = 13;
     int id;
+    /** Черная шашка, белая, пустая клетка */
     ITEM_TYPE type;
     /**Дамка?*/
     boolean isKing;
