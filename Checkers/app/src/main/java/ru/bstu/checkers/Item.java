@@ -31,10 +31,6 @@ public class Item {
         ways[6] = tripleWayH6F8; ways[7] = tripleWayA3F8; ways[8] = ultraWayA5D8;
         ways[9] = ultraWayH4D8; ways[10] = ultraWayE1A5; ways[11] = ultraWayE1H4;
         ways[12] = goldWay;
-        /*this.doubleWayG1A7 = doubleWayG1A7; this.doubleWayH2B8 = doubleWayH2B8; this.doubleWayG1H2 = doubleWayG1H2;
-        this.doubleWayA7B8 = doubleWayA7B8; this.tripleWayC1A3 = tripleWayC1A3; this.tripleWayC1H6 = tripleWayC1H6;
-        this.tripleWayH6F8 = tripleWayH6F8; this.tripleWayA3F8 = tripleWayA3F8; this.ultraWayA5D8 = ultraWayA5D8;
-        this.ultraWayH4D8 = ultraWayH4D8; this.ultraWayE1A5 = ultraWayE1A5; this.ultraWayE1H4 = ultraWayE1H4;
-        this.goldWay = goldWay;*/
+
     }
 }
