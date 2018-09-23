@@ -581,6 +581,60 @@ public class GameEngine {
             GameEngine.turn = (GameEngine.turn == Item.ITEM_TYPE.white ? Item.ITEM_TYPE.black : Item.ITEM_TYPE.white);
     }
 
+    static private boolean RemoveFakeJumpsUp(Item king, int idxItem, int s, Item item, LinkedList<Item> ongoingJumps, LinkedList<Item> undecidedJumps)
+    {
+        int way_size = ways[s].size();
+        boolean ongoing = false;
+        int k = idxItem;
+        //Пропускаем все пустые клетки после item (ИДЕМ ВВЕРХ ПО ДИАГОНАЛИ)
+        for (++k; (k < way_size) && (ways[s].get(k).type == ITEM_TYPE.square); ++k);
+        if (k != way_size) // Встретили шашку?
+        {
+            // Встретили шашку соперника?
+            if (king.type != ways[s].get(k).type) {
+                // Проверяем, может ли item (т.е. возможно будущая наша дамка) бить с этой позиции
+                for (int q = k + 1; (q < way_size) && (ways[s].get(q).type == ITEM_TYPE.square); ++q) {
+                    ongoing = true;
+                    ongoingJumps.add(item);
+                    undecidedJumps.remove(item);
+                    break;
+                }
+                if (ongoing)  return true; //может
+                else if (!undecidedJumps.contains(item)) undecidedJumps.add(item); //не может
+            } //Встретили нашу другую шашку
+            else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
+        } //Не встретили шашку
+        else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
+        return false;
+    }
+
+    static private boolean RemoveFakeJumpsDown(Item king, int idxItem, int s, Item item, LinkedList<Item> ongoingJumps, LinkedList<Item> undecidedJumps)
+    {
+        boolean ongoing = false;
+        int k = idxItem;
+        //Пропускаем все пустые клетки до item (ИДЕМ ВНИЗ ПО ДИАГОНАЛИ)
+        for(--k; (k >= 0) && (ways[s].get(k).type == ITEM_TYPE.square); --k);
+        if (k != -1) // Встретили шашку на пути?
+        {
+            // Встретили шашку соперника?
+            if (king.type != ways[s].get(k).type)
+            {
+                // Проверяем, может ли item (т.е. возможно будущая наша дамка) бить с этой позиции
+                for (int q = k - 1; (q != -1) && (ways[s].get(q).type == ITEM_TYPE.square); --q) {
+                    ongoing = true;
+                    ongoingJumps.add(item);
+                    undecidedJumps.remove(item);
+                    break;
+                }
+                if (ongoing)  return true; //может
+                else if (!undecidedJumps.contains(item)) undecidedJumps.add(item); //не может
+            } //Встретили нашу другую шашку
+            else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
+        } //Не встретили шашку
+        else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
+        return false;
+    }
+
     /**
      * Удаляет неверные ходы для дамок после битья. Допустим, после битья дамка может оказаться
      * на двух разных клетках. С одной клетки она будет должна бить далее, а с другой нет.
@@ -606,99 +660,15 @@ public class GameEngine {
                     {
                         //Ищем, где находиться дамка, чтобы не идти в ее сторону
                         int idxKing = ways[s].indexOf(king); //Индекс king на этой диагонали
-                        int way_size = ways[s].size();
-                        boolean ongoing = false;
-                        int k = idxItem;
-                        if (idxKing < idxItem)
-                        {
-                            //Пропускаем все пустые клетки после item (ИДЕМ ВВЕРХ ПО ДИАГОНАЛИ)
-                            for (++k; (k < way_size) && (ways[s].get(k).type == ITEM_TYPE.square); ++k);
-                            if (k != way_size) // Встретили шашку?
-                            {
-                                // Встретили шашку соперника?
-                                if (king.type != ways[s].get(k).type) {
-                                    // Проверяем, может ли item (т.е. возможно будущая наша дамка) бить с этой позиции
-                                    for (int q = k + 1; (q < way_size) && (ways[s].get(q).type == ITEM_TYPE.square); ++q) {
-                                        ongoing = true;
-                                        ongoingJumps.add(item);
-                                        undecidedJumps.remove(item);
-                                        break;
-                                    }
-                                    if (ongoing)  break; //может
-                                    else if (!undecidedJumps.contains(item)) undecidedJumps.add(item); //не может
-                                } //Встретили нашу другую шашку
-                                else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
-                            } //Не встретили шашку
-                            else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
-                        }
-                        else { //idxKing > idxItem
-                            //Пропускаем все пустые клетки до item (ИДЕМ ВНИЗ ПО ДИАГОНАЛИ)
-                            for(--k; (k >= 0) && (ways[s].get(k).type == ITEM_TYPE.square); --k);
-                            if (k != -1) // Встретили шашку на пути?
-                            {
-                                // Встретили шашку соперника?
-                                if (king.type != ways[s].get(k).type)
-                                {
-                                    // Проверяем, может ли item (т.е. возможно будущая наша дамка) бить с этой позиции
-                                    for (int q = k - 1; (q != -1) && (ways[s].get(q).type == ITEM_TYPE.square); --q) {
-                                        ongoing = true;
-                                        ongoingJumps.add(item);
-                                        undecidedJumps.remove(item);
-                                        break;
-                                    }
-                                    if (ongoing)  break; //может
-                                    else if (!undecidedJumps.contains(item)) undecidedJumps.add(item); //не может
-                                } //Встретили нашу другую шашку
-                                else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
-                            } //Не встретили шашку
-                            else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
-                        }
+                        if (idxKing < idxItem) {
+                            if (RemoveFakeJumpsUp(king, idxItem, s, item, ongoingJumps, undecidedJumps)) break;
+                        }//idxKing > idxItem
+                        else if (RemoveFakeJumpsDown(king, idxItem, s, item, ongoingJumps, undecidedJumps)) break;
+
                     }//Дамка НЕ лежит на этой же диагонали
                     else {
-                        int way_size = ways[s].size();
-                        boolean ongoing = false;
-                        int k = idxItem; //Индекс item на этой диагонали
-                        //Пропускаем все пустые клетки после item (ИДЕМ ВВЕРХ ПО ДИАГОНАЛИ)
-                        for (++k; (k < way_size) && (ways[s].get(k).type == ITEM_TYPE.square); ++k);
-                        if (k != way_size) // Встретили шашку?
-                        {
-                            // Встретили шашку соперника?
-                            if (king.type != ways[s].get(k).type) {
-                                // Проверяем, может ли item (т.е. будущая наша дамка) бить с этой позиции
-                                for (int q = k + 1; (q < way_size) && (ways[s].get(q).type == ITEM_TYPE.square); ++q) {
-                                    ongoing = true;
-                                    ongoingJumps.add(item);
-                                    undecidedJumps.remove(item);
-                                    break;
-                                }
-                                if (ongoing)  break; //может
-                                else if (!undecidedJumps.contains(item)) undecidedJumps.add(item); //не может
-                            } //Встретили нашу другую шашку
-                            else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
-                        } //Не встретили шашку
-                        else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
-
-                        k = ways[s].indexOf(item); //Индекс item на этой диагонали
-                        //Пропускаем все пустые клетки до item (ИДЕМ ВНИЗ ПО ДИАГОНАЛИ)
-                        for(--k; (k >= 0) && (ways[s].get(k).type == ITEM_TYPE.square); --k);
-                        if (k != -1) // Встретили шашку на пути?
-                        {
-                            // Встретили шашку соперника?
-                            if (king.type != ways[s].get(k).type)
-                            {
-                                // Проверяем, может ли item (т.е. будущая наша дамка) бить с этой позиции
-                                for (int q = k - 1; (q != -1) && (ways[s].get(q).type == ITEM_TYPE.square); --q) {
-                                    ongoing = true;
-                                    ongoingJumps.add(item);
-                                    undecidedJumps.remove(item);
-                                    break;
-                                }
-                                if (ongoing)  break; //может
-                                else if (!undecidedJumps.contains(item)) undecidedJumps.add(item); //не может
-                            } //Встретили нашу другую шашку
-                            else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
-                        } //Не встретили шашку
-                        else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
+                        if (RemoveFakeJumpsUp(king, idxItem, s, item, ongoingJumps, undecidedJumps)) break;
+                        if (RemoveFakeJumpsDown(king, idxItem, s, item, ongoingJumps, undecidedJumps)) break;
                     }
                 }
             }
