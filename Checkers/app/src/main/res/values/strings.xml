@@ -21,10 +21,15 @@
     <string name="text_tv_player2_name">Player 2</string>
 
     <!--Имя дефолтной иконки для отображения в ListPreferences-->
-    <string name="default_icon_file">draughts_set1</string>
+    <string name="default_draughtSet_file">draughts_set1</string>
     <!--Ключ (имя иконки) для доступа к имени файла выбранной иконки в настройках приложения-->
-    <string name="custom_icon_key">customIconKey</string>
+    <string name="selectedDraughtSet">customIconKey</string>
 
+
+    <string name="idBlackDraught">idBlackDraught</string>
+    <string name="idWhiteDraught">idWhiteDraught</string>
+    <string name="idBlackKing">idBlackKing</string>
+    <string name="idWhiteKing">idWhiteKing</string>
 
     <!--Список имен иконок (т.е. ключи entries) -->
     <string-array name="iconNames">

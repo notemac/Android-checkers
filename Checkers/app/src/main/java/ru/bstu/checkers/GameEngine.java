@@ -1,26 +1,37 @@
 package ru.bstu.checkers;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
-import android.util.ArrayMap;
-import android.util.Log;
-import android.view.Window;
+import android.preference.PreferenceManager;
+import android.view.View;
 import android.widget.ImageButton;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
+
 
 import ru.bstu.checkers.Item.ITEM_TYPE;
 
 /* Backup: https://github.com/notemac/Android-checkers.
-   Основные идеи реализации алгоритма взяты отсюда: https://habr.com/post/227911/ - Как я шашки писал */
+   Основные идеи алгоритма взяты отсюда: https://habr.com/post/227911/ - Как я шашки писал
+
+   НЕРЕАЛИЗОВАНО:
+ * Избегаем ситуации "побить шашку дважды". Рассмотрим позицию:
+ * белые простые: d2, e3, d4, f4, g3; черная дамка: h4.
+ * Дамка черных после битья белых шашек должна оказаться на одной из клеток e5:h8,
+ * т.е. она не может бить далее на g3 и h2.
+ */
+
 
 public class GameEngine {
+    public static Activity gameActivity;
     /**
      * Item, на который игрок кликнул первый раз
      */
-    public static Item selectedFirstItem = null;
+    private static Item selectedFirstItem = null;
+    private static Item selectedSecondItem = null;
     /**
      * Надо бить? (Бить обязательно)
      */
@@ -60,6 +71,10 @@ public class GameEngine {
      */
     public static int[][] kingSquares;
 
+    /**
+     * Список всех побитых шашек за текущий ход
+     */
+    //private static LinkedList<Item> deadItems;
     public static void Init() {
         kingSquares = new int[2][4];
         kingSquares[0][0] = R.id.a1;
@@ -326,32 +341,26 @@ public class GameEngine {
     /**
      * Ищем ходы, куда шашка item может побить далее
      */
-    private static void SearchForNextJumps(Item item)
-    {
+    public static boolean SearchForNextJump() {
         // Ищем диагонали, на которых лежит шашка
-        for (int i = 0; i < Item.WAYS_COUNT; ++i)
-        {
-            if (item.ways[i])
-            {
+        for (int i = 0; i < Item.WAYS_COUNT; ++i) {
+            if (selectedSecondItem.ways[i]) {
                 //Проходим по текущей диагонали
                 int way_size = ways[i].size();
-                int j = ways[i].indexOf(item); //Индекс шашки item на этой диагонали
-                if (item.isKing) // ДАМКА
+                int j = ways[i].indexOf(selectedSecondItem); //Индекс шашки item на этой диагонали
+                if (selectedSecondItem.isKing) // ДАМКА
                 {
                     int k = j;
-                    Item king = item;
+                    Item king = selectedSecondItem;
                     int listJumpId = -1; // индекс списка в jumps для этой дамки и диагонали, на которой дамка лежит
                     //Пропускаем все пустые клетки после дамки (ИДЕМ ВВЕРХ ПО ДИАГОНАЛИ)
-                    for(++k; (k < way_size) && (ways[i].get(k).type == ITEM_TYPE.square); ++k);
+                    for (++k; (k < way_size) && (ways[i].get(k).type == ITEM_TYPE.square); ++k) ;
                     // Встретили шашку?
-                    if (k != way_size)
-                    {
+                    if (k != way_size) {
                         // Шашка соперника?
-                        if (king.type != ways[i].get(k).type)
-                        {
+                        if (king.type != ways[i].get(k).type) {
                             // Добавляем все ходы для битья
-                            for (int q = k + 1; (q < way_size) && (ways[i].get(q).type == ITEM_TYPE.square); ++q)
-                            {
+                            for (int q = k + 1; (q < way_size) && (ways[i].get(q).type == ITEM_TYPE.square); ++q) {
                                 listJumpId = AddJump(king, ways[i].get(k), ways[i].get(q));
                                 isJump = true;
                             }
@@ -363,32 +372,27 @@ public class GameEngine {
                     listJumpId = -1;
                     k = j;
                     //Пропускаем все пустые клетки до дамки (ИДЕМ ВНИЗ ПО ДИАГОНАЛИ)
-                    for(--k; (k >= 0) && (ways[i].get(k).type == ITEM_TYPE.square); --k);
+                    for (--k; (k >= 0) && (ways[i].get(k).type == ITEM_TYPE.square); --k) ;
                     // Встретили шашку на пути?
-                    if (k != -1)
-                    {
+                    if (k != -1) {
                         // Шашка соперника?
-                        if (king.type != ways[i].get(k).type)
-                        {
+                        if (king.type != ways[i].get(k).type) {
                             // Добавляем все ходы для битья
-                            for (int q = k - 1; (q != -1) && (ways[i].get(q).type == ITEM_TYPE.square); --q)
-                            {
+                            for (int q = k - 1; (q != -1) && (ways[i].get(q).type == ITEM_TYPE.square); --q) {
                                 listJumpId = AddJump(king, ways[i].get(k), ways[i].get(q));
                                 isJump = true;
-                                isMove = false;
                             }
                             if (listJumpId != -1)
                                 RemoveFakeJumps(listJumpId);
                         }
                     }
-                }
-                else { // ОБЫЧНАЯ ШАШКА
+                } else { // ОБЫЧНАЯ ШАШКА
                     // Ищем комбинацию «шашка(1) - шашка (2) - пустое поле» (движемся вверх по диагонали)
                     if (j + 1 != way_size)// На диагонали после текущей шашки(1) имеются еще шашки или клетки?
                     {
                         ITEM_TYPE nextItemType = ways[i].get(j + 1).type;
                         // Далее находится шашка(2)?
-                        if ((item.type != nextItemType) && (nextItemType != ITEM_TYPE.square)) {
+                        if ((selectedSecondItem.type != nextItemType) && (nextItemType != ITEM_TYPE.square)) {
                             // После шашки(2) находится клетка?
                             if ((j + 2 != way_size) && (ways[i].get(j + 2).type == ITEM_TYPE.square)) {
                                 AddJump(ways[i].get(j), ways[i].get(j + 1), ways[i].get(j + 2));
@@ -401,7 +405,7 @@ public class GameEngine {
                     {
                         ITEM_TYPE prevItemType = ways[i].get(j - 1).type;
                         // Сзади находится шашка(2)?
-                        if ((item.type != prevItemType) && (prevItemType != ITEM_TYPE.square)) {
+                        if ((selectedSecondItem.type != prevItemType) && (prevItemType != ITEM_TYPE.square)) {
                             // Перед шашкой(2) находится клетка?
                             if ((j - 2 >= 0) && (ways[i].get(j - 2).type == ITEM_TYPE.square)) {
                                 AddJump(ways[i].get(j), ways[i].get(j - 1), ways[i].get(j - 2));
@@ -412,27 +416,24 @@ public class GameEngine {
                 }
             }
         }
+        selectedSecondItem = null;
+        return isJump;
     }
 
     /**
      * Игрок кликнул на свою шашку? Если да, запомним ее как selectedItem
      */
-    public static boolean CheckTurn(int id)
-    {
+    public static boolean CheckTurn(int id) {
         // Проходим по всем диагоналям
-        for (int i = 0; i < ways.length; ++i)
-        {
+        for (int i = 0; i < ways.length; ++i) {
             int way_size = ways[i].size();
             // Проходим по всем шашкам и клеткам на диагонали
-            for (int j = 0; j < way_size; ++j)
-            {
+            for (int j = 0; j < way_size; ++j) {
                 Item item = ways[i].get(j);
                 // Пропускаем шашки соперника и пустые клетки
-                if (item.type == turn)
-                {
+                if (item.type == turn) {
                     //Игрок кликнул на эту шашку?
-                    if (item.id == id)
-                    {
+                    if (item.id == id) {
                         selectedFirstItem = item;
                         return true;
                     }
@@ -443,12 +444,77 @@ public class GameEngine {
     }
 
     /**
+     * Подсвечивает возможные ходы
+     */
+    public static void HighlightMoves() {
+        gameActivity.findViewById(selectedFirstItem.id).setBackgroundResource(R.color.colorRed);
+        if (isJump) {
+            for (int i = 0; i < jumps.size(); ++i) {
+                LinkedList<Item> items = jumps.get(i);
+                if (items.get(0).id == selectedFirstItem.id) {
+                    for (int j = 2; j < items.size(); ++j) {
+                        gameActivity.findViewById(items.get(j).id).setBackgroundResource(R.color.colorGreen);
+                    }
+                }
+            }
+        } else { //isMove
+            for (int i = 0; i < moves.size(); ++i) {
+                LinkedList<Item> items = moves.get(i);
+                if (items.get(0).id == selectedFirstItem.id) {
+                    for (int j = 1; j < items.size(); ++j) {
+                        gameActivity.findViewById(items.get(j).id).setBackgroundResource(R.color.colorGreen);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Убрать подсветку клеток
+     */
+    public static void RemoveHighlighting() {
+
+    }
+
+
+    public static void PrepareForNextMove(boolean isRepick) {
+        gameActivity.findViewById(selectedFirstItem.id).setBackgroundResource(R.drawable.black_square);
+        if (isJump) {
+            for (int i = 0; i < jumps.size(); ++i) {
+                LinkedList<Item> items = jumps.get(i);
+                if (items.get(0).id == selectedFirstItem.id) {
+                    for (int j = 2; j < items.size(); ++j) {
+                        gameActivity.findViewById(items.get(j).id).setBackgroundResource(R.drawable.black_square);
+                    }
+                }
+            }
+        } else { //isMove
+            for (int i = 0; i < moves.size(); ++i) {
+                LinkedList<Item> items = moves.get(i);
+                if (items.get(0).id == selectedFirstItem.id) {
+                    for (int j = 1; j < items.size(); ++j) {
+                        gameActivity.findViewById(items.get(j).id).setBackgroundResource(R.drawable.black_square);
+                    }
+                }
+            }
+        }
+        if (!isRepick) {
+            isJump = isMove = false;
+            moves.clear();
+            jumps.clear();
+        }
+        isNeedSecondClick = false;
+        selectedFirstItem = null;
+    }
+
+    /**
      * Выбранная шашка selectedFirstItem может бить?
      */
     public static boolean CheckJump() {
         for (int i = 0; i < jumps.size(); ++i) {
-            if (jumps.get(i).get(0).id == selectedFirstItem.id)
+            if (jumps.get(i).get(0).id == selectedFirstItem.id) {
                 return true;
+            }
         }
         return false;
     }
@@ -467,27 +533,17 @@ public class GameEngine {
     /**
      * Бьем выбранной шашкой selectedItem на клетку с идентификатором id.
      */
-    public static boolean Jump(int id, Window window) {
+    public static boolean Jump(int id) {
         // Ищем выбранную шашку среди всех шашек, которые могут бить
-        for (int i = 0; i < jumps.size(); ++i)
-        {
+        for (int i = 0; i < jumps.size(); ++i) {
             LinkedList<Item> items = jumps.get(i);
-            if (items.get(0).id == selectedFirstItem.id)
-            {
+            if (items.get(0).id == selectedFirstItem.id) {
                 // Проверяем все клетки, куда шашка может бить
-                for (int j = 2; j < items.size(); ++j)
-                {
+                for (int j = 2; j < items.size(); ++j) {
                     Item toItem = items.get(j);
                     if (toItem.id == id) // Можем бить на клетку с идентификатором id?
                     {
-                        // Перемещаем шашку на экране
-                        ImageButton from = window.findViewById(selectedFirstItem.id);
-                        ImageButton middle = window.findViewById(items.get(1).id);
-                        ImageButton to = window.findViewById(id);
-                        Drawable d = from.getDrawable();
-                        from.setImageDrawable(to.getDrawable());
-                        to.setImageDrawable(d);
-                        middle.setImageDrawable(from.getDrawable());
+                        selectedSecondItem = toItem;
 
                         //Превращаем в дамку простую шашку, если встали на дамочное поле
                         if (!selectedFirstItem.isKing) {
@@ -499,18 +555,31 @@ public class GameEngine {
                             }
                         }
 
-                        // Переинициализируем значения для передачи хода сопернику или для того чтобы самому продолжить бить
-                        isJump = isMove = isNeedSecondClick = false;
                         toItem.isKing = selectedFirstItem.isKing;
                         selectedFirstItem.isKing = false;
                         items.get(1).isKing = false;
                         items.get(1).type = ITEM_TYPE.square;
                         toItem.type = selectedFirstItem.type;
                         selectedFirstItem.type = ITEM_TYPE.square;
-                        moves.clear();
-                        jumps.clear();
-                        selectedFirstItem = null;
-                        SearchForNextJumps(toItem);
+
+                        // Перемещаем шашку на экране
+                        ImageButton from = gameActivity.findViewById(selectedFirstItem.id);
+                        ImageButton middle = gameActivity.findViewById(items.get(1).id);
+                        ImageButton to = gameActivity.findViewById(id);
+                        Drawable d = from.getDrawable();
+                        from.setImageDrawable(to.getDrawable());
+
+                        if (toItem.isKing) {
+                            Context context = gameActivity.getApplicationContext();
+                            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+                            if (toItem.type == ITEM_TYPE.black)
+                                to.setImageResource(preferences.getInt(context.getResources()
+                                        .getString(R.string.idBlackKing), R.drawable.black_king));
+                            else
+                                to.setImageResource(preferences.getInt(context.getResources()
+                                        .getString(R.string.idWhiteKing), R.drawable.white_king));
+                        } else to.setImageDrawable(d);
+                        middle.setImageDrawable(from.getDrawable());
                         return true;
                     }
                 }
@@ -522,27 +591,16 @@ public class GameEngine {
     /**
      * Делаем ход выбранной шашкой selectedItem на клетку с идентификатором id.
      */
-    public static boolean Move(int id, Window window)
-    {
+    public static boolean Move(int id) {
         // Ищем выбранную шашку среди всех шашек, которые могут ходить
-        for (int i = 0; i < moves.size(); ++i)
-        {
+        for (int i = 0; i < moves.size(); ++i) {
             LinkedList<Item> items = moves.get(i);
-            if (items.get(0).id == selectedFirstItem.id)
-            {
+            if (items.get(0).id == selectedFirstItem.id) {
                 // Проверяем все клетки, куда шашка может пойти
-                for (int j = 1; j < items.size(); ++j)
-                {
+                for (int j = 1; j < items.size(); ++j) {
                     Item toItem = items.get(j);
                     if (toItem.id == id)// Можем ходить на клетку с идентификатором id?
                     {
-                        // Перемещаем шашку на экране
-                        ImageButton from = window.findViewById(selectedFirstItem.id);
-                        ImageButton to = window.findViewById(id);
-                        Drawable d = from.getDrawable();
-                        from.setImageDrawable(to.getDrawable());
-                        to.setImageDrawable(d);
-
                         //Превращаем в дамку простую шашку, если встали на дамочное поле
                         if (!selectedFirstItem.isKing) {
                             for (int k = 0; k < 4; ++k) {
@@ -553,15 +611,27 @@ public class GameEngine {
                             }
                         }
 
-                        // Переинициализируем значения для передачи хода сопернику или для того чтобы самому продолжить бить
-                        isJump = isMove = isNeedSecondClick = false;
                         toItem.isKing = selectedFirstItem.isKing;
                         selectedFirstItem.isKing = false;
                         toItem.type = selectedFirstItem.type;
                         selectedFirstItem.type = ITEM_TYPE.square;
-                        moves.clear();
-                        jumps.clear();
-                        selectedFirstItem = null;
+
+                        // Перемещаем шашку на экране
+                        ImageButton from = gameActivity.findViewById(selectedFirstItem.id);
+                        ImageButton to = gameActivity.findViewById(id);
+                        Drawable d = from.getDrawable();
+                        from.setImageDrawable(to.getDrawable());
+
+                        if (toItem.isKing) {
+                            Context context = gameActivity.getApplicationContext();
+                            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+                            if (toItem.type == ITEM_TYPE.black)
+                                to.setImageResource(preferences.getInt(context.getResources()
+                                        .getString(R.string.idBlackKing), R.drawable.black_king));
+                            else
+                                to.setImageResource(preferences.getInt(context.getResources()
+                                        .getString(R.string.idWhiteKing), R.drawable.white_king));
+                        } else to.setImageDrawable(d);
                         return true;
                     }
                 }
@@ -574,20 +644,26 @@ public class GameEngine {
     }
 
     /**
-     * Изменить очередь хода при необходимости
+     * Изменить очередь хода
      */
     public static void NextTurn() {
-        if (!isJump) // Если бить больше нечего, меняем очередь хода
-            GameEngine.turn = (GameEngine.turn == Item.ITEM_TYPE.white ? Item.ITEM_TYPE.black : Item.ITEM_TYPE.white);
+        if (GameEngine.turn == Item.ITEM_TYPE.white) {
+            gameActivity.findViewById(R.id.iv_timer1).setVisibility(View.INVISIBLE);
+            gameActivity.findViewById(R.id.iv_timer2).setVisibility(View.VISIBLE);
+            turn = Item.ITEM_TYPE.black;
+        } else {
+            gameActivity.findViewById(R.id.iv_timer1).setVisibility(View.VISIBLE);
+            gameActivity.findViewById(R.id.iv_timer2).setVisibility(View.INVISIBLE);
+            turn = ITEM_TYPE.white;
+        }
     }
 
-    static private boolean RemoveFakeJumpsUp(Item king, int idxItem, int s, Item item, LinkedList<Item> ongoingJumps, LinkedList<Item> undecidedJumps)
-    {
+    static private boolean RemoveFakeJumpsUp(Item king, int idxItem, int s, Item item, LinkedList<Item> ongoingJumps, LinkedList<Item> undecidedJumps) {
         int way_size = ways[s].size();
         boolean ongoing = false;
         int k = idxItem;
         //Пропускаем все пустые клетки после item (ИДЕМ ВВЕРХ ПО ДИАГОНАЛИ)
-        for (++k; (k < way_size) && (ways[s].get(k).type == ITEM_TYPE.square); ++k);
+        for (++k; (k < way_size) && (ways[s].get(k).type == ITEM_TYPE.square); ++k) ;
         if (k != way_size) // Встретили шашку?
         {
             // Встретили шашку соперника?
@@ -599,7 +675,7 @@ public class GameEngine {
                     undecidedJumps.remove(item);
                     break;
                 }
-                if (ongoing)  return true; //может
+                if (ongoing) return true; //может
                 else if (!undecidedJumps.contains(item)) undecidedJumps.add(item); //не может
             } //Встретили нашу другую шашку
             else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
@@ -608,17 +684,15 @@ public class GameEngine {
         return false;
     }
 
-    static private boolean RemoveFakeJumpsDown(Item king, int idxItem, int s, Item item, LinkedList<Item> ongoingJumps, LinkedList<Item> undecidedJumps)
-    {
+    static private boolean RemoveFakeJumpsDown(Item king, int idxItem, int s, Item item, LinkedList<Item> ongoingJumps, LinkedList<Item> undecidedJumps) {
         boolean ongoing = false;
         int k = idxItem;
         //Пропускаем все пустые клетки до item (ИДЕМ ВНИЗ ПО ДИАГОНАЛИ)
-        for(--k; (k >= 0) && (ways[s].get(k).type == ITEM_TYPE.square); --k);
+        for (--k; (k >= 0) && (ways[s].get(k).type == ITEM_TYPE.square); --k) ;
         if (k != -1) // Встретили шашку на пути?
         {
             // Встретили шашку соперника?
-            if (king.type != ways[s].get(k).type)
-            {
+            if (king.type != ways[s].get(k).type) {
                 // Проверяем, может ли item (т.е. возможно будущая наша дамка) бить с этой позиции
                 for (int q = k - 1; (q != -1) && (ways[s].get(q).type == ITEM_TYPE.square); --q) {
                     ongoing = true;
@@ -626,7 +700,7 @@ public class GameEngine {
                     undecidedJumps.remove(item);
                     break;
                 }
-                if (ongoing)  return true; //может
+                if (ongoing) return true; //может
                 else if (!undecidedJumps.contains(item)) undecidedJumps.add(item); //не может
             } //Встретили нашу другую шашку
             else if (!undecidedJumps.contains(item)) undecidedJumps.add(item);
@@ -640,19 +714,16 @@ public class GameEngine {
      * на двух разных клетках. С одной клетки она будет должна бить далее, а с другой нет.
      * Поэтому одну из клеток необходимо убрать из возможных ходов.
      */
-    static private void RemoveFakeJumps(int listJumpId)
-    {
+    static private void RemoveFakeJumps(int listJumpId) {
         LinkedList<Item> ongoingJumps = new LinkedList<Item>();
         LinkedList<Item> undecidedJumps = new LinkedList<Item>();
 
         //Проходим по всем клеткам в списке, куда дамка может побить, для текущей диагонали
         LinkedList<Item> items = jumps.get(listJumpId);
-        for (int i = 2; i < items.size(); ++i)
-        {
+        for (int i = 2; i < items.size(); ++i) {
             Item king = items.get(0); //Запоминаем дамку
             Item item = items.get(i); //Запоминаем текущую клетку
-            for (int s = 0; s < Item.WAYS_COUNT; ++s)
-            {
+            for (int s = 0; s < Item.WAYS_COUNT; ++s) {
                 if (item.ways[s]) //Ищем диагонали, на которых лежит item
                 {
                     int idxItem = ways[s].indexOf(item); //Индекс item на этой диагонали
@@ -661,14 +732,18 @@ public class GameEngine {
                         //Ищем, где находиться дамка, чтобы не идти в ее сторону
                         int idxKing = ways[s].indexOf(king); //Индекс king на этой диагонали
                         if (idxKing < idxItem) {
-                            if (RemoveFakeJumpsUp(king, idxItem, s, item, ongoingJumps, undecidedJumps)) break;
+                            if (RemoveFakeJumpsUp(king, idxItem, s, item, ongoingJumps, undecidedJumps))
+                                break;
                         }//idxKing > idxItem
-                        else if (RemoveFakeJumpsDown(king, idxItem, s, item, ongoingJumps, undecidedJumps)) break;
+                        else if (RemoveFakeJumpsDown(king, idxItem, s, item, ongoingJumps, undecidedJumps))
+                            break;
 
                     }//Дамка НЕ лежит на этой же диагонали
                     else {
-                        if (RemoveFakeJumpsUp(king, idxItem, s, item, ongoingJumps, undecidedJumps)) break;
-                        if (RemoveFakeJumpsDown(king, idxItem, s, item, ongoingJumps, undecidedJumps)) break;
+                        if (RemoveFakeJumpsUp(king, idxItem, s, item, ongoingJumps, undecidedJumps))
+                            break;
+                        if (RemoveFakeJumpsDown(king, idxItem, s, item, ongoingJumps, undecidedJumps))
+                            break;
                     }
                 }
             }
@@ -684,18 +759,13 @@ public class GameEngine {
      * Ищем все возможные ходы (надо бить или ходить)
      */
     public static void SearchForAllMoves() {
-        // Если игрок продолжает бить, то return. Т.к. ходы уже найдены с помощью вызова метода
-        // SearchForNextJumps(Item item) для бьющей шашки item в конце метода Jump(int id, Window window)
-        if (isJump) return;
 
         isJump = isMove = false;
         //Проходим по всем диагоналям
-        for (int i = 0; i < ways.length; ++i)
-        {
+        for (int i = 0; i < ways.length; ++i) {
             //Проходим по текущей диагонали
             int way_size = ways[i].size();
-            for (int j = 0; j < way_size; ++j)
-            {
+            for (int j = 0; j < way_size; ++j) {
                 if (ways[i].get(j).type == turn) //Ищем ходы только для шашек соответствующего цвета
                 {
                     if (ways[i].get(j).isKing) // ДАМКА
@@ -704,7 +774,8 @@ public class GameEngine {
                         int k = j; // j - индекс дамки на диагонали
                         Item king = ways[i].get(j);
                         //Пропускаем все пустые клетки после дамки (ИДЕМ ВВЕРХ ПО ДИАГОНАЛИ)
-                        for(++k; (k < way_size) && (ways[i].get(k).type == ITEM_TYPE.square); ++k);
+                        for (++k; (k < way_size) && (ways[i].get(k).type == ITEM_TYPE.square); ++k)
+                            ;
                         // Встретили шашку?
                         if (k != way_size) {
                             // Шашка соперника?
@@ -737,7 +808,7 @@ public class GameEngine {
                         listJumpId = -1;
                         k = j;
                         //Пропускаем все пустые клетки до дамки (ИДЕМ ВНИЗ ПО ДИАГОНАЛИ)
-                        for(--k; (k >= 0) && (ways[i].get(k).type == ITEM_TYPE.square); --k);
+                        for (--k; (k >= 0) && (ways[i].get(k).type == ITEM_TYPE.square); --k) ;
                         // Встретили шашку на пути?
                         if (k != -1) {
                             // Шашка соперника?
@@ -768,8 +839,7 @@ public class GameEngine {
                                 isMove = true;
                             }
                         }
-                    }
-                    else { // Иначе ОБЫЧНАЯ ШАШКА
+                    } else { // Иначе ОБЫЧНАЯ ШАШКА
                         ITEM_TYPE itemType = ways[i].get(j).type;
                         // Ищем комбинацию «шашка(1) - шашка (2) - пустое поле» (движемся вверх по диагонали)
                         if (j + 1 != way_size)// На диагонали после текущей шашки(1) имеются еще шашки или клетки?
@@ -821,4 +891,5 @@ public class GameEngine {
         }
     }
 }
+
 

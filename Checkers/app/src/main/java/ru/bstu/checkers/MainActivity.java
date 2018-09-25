@@ -27,11 +27,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        /**Resources res = getResources();
-        TypedArray icons = res.obtainTypedArray(R.array.a8);
-        Drawable drawable = icons.getDrawable(0);*/
-
-
         findViewById(R.id.menu_newgame).setOnClickListener(this);
         findViewById(R.id.menu_loadgame).setOnClickListener(this);
         findViewById(R.id.menu_settings).setOnClickListener(this);
@@ -65,19 +60,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 //android.os.Process.killProcess(android.os.Process.myPid());
                 //System.exit(1);
                 break;
-            /*case R.id.ttt:
-                if (tv.isClickable())
-                    tv.setClickable(false);
-                Toast.makeText(this, "!!!!!", Toast.LENGTH_LONG).show();*/
-                //else  tv.setClickable(true);
-                //ib.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP); СОЗДАЕТ РАМКУ ВОКРУГ КАРТИНКИ
-                //ib.setColorFIlter(null) = undo = ib.ClearColorFilter
-                //tv.setSelected(true);
-                //tv.setPressed(true);
-                //tv.setBackgroundTintMode();
-               // tv.setTextColor(getResources().getColor(android.R.color.white, null));
-                //.setImageResource(R.drawable.c116);
-               // break;
         }
     }
 }

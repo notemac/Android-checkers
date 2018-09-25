@@ -64,7 +64,7 @@ public class DraughtsSetPreferenceEngine extends ListPreference {
         this.context = context;
         this.resources = context.getResources();
         this.preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        this.defaultIconFile = this.resources.getString(R.string.default_icon_file);
+        this.defaultIconFile = this.resources.getString(R.string.default_draughtSet_file);
     }
     /**Дескриптор контекста приложения*/
     private Context context;
@@ -99,7 +99,7 @@ public class DraughtsSetPreferenceEngine extends ListPreference {
     protected void onBindView(View view) {
         super.onBindView(view);
         //Извлекаем имя файла выбранной иконки
-        selectedIconFile = preferences.getString(resources.getString(R.string.custom_icon_key), defaultIconFile);
+        selectedIconFile = preferences.getString(resources.getString(R.string.selectedDraughtSet), defaultIconFile);
         //Обновляем выбранную иконку и ее краткое описание
         icon = (ImageView) view.findViewById(R.id.ii_dsp_iconImageSelected);
         updateIcon();
@@ -196,9 +196,7 @@ public class DraughtsSetPreferenceEngine extends ListPreference {
                             + "and an entryValues array which are both the same length");
         }
 
-        String selectedIconFile = preferences.getString(
-                resources.getString(R.string.custom_icon_key),
-                resources.getString(R.string.default_icon_file));
+        String selectedIconFile = preferences.getString( resources.getString(R.string.selectedDraughtSet),  defaultIconFile);
 
         icons = new ArrayList<IconItem>();
 
@@ -223,8 +221,23 @@ public class DraughtsSetPreferenceEngine extends ListPreference {
             for (int i = 0; i < iconNames.length; i++) {
                 IconItem item = icons.get(i);
                 if (item.isChecked) {
+                    PreferencesActivity.isChangedSettings = true;
                     Editor editor = preferences.edit();
-                    editor.putString(resources.getString(R.string.custom_icon_key), item.file);
+                    if (item.file.equals(getEntryValues()[0]))
+                    {
+                        editor.putInt(resources.getString(R.string.idBlackDraught), R.drawable.black_draught);
+                        editor.putInt(resources.getString(R.string.idWhiteDraught), R.drawable.white_draught);
+                        editor.putInt(resources.getString(R.string.idBlackKing), R.drawable.black_king);
+                        editor.putInt(resources.getString(R.string.idWhiteKing), R.drawable.white_king);
+                    }
+                    else
+                    {
+                        editor.putInt(resources.getString(R.string.idBlackDraught), R.drawable.black_draught2);
+                        editor.putInt(resources.getString(R.string.idWhiteDraught), R.drawable.white_draught2);
+                        editor.putInt(resources.getString(R.string.idBlackKing), R.drawable.black_king2);
+                        editor.putInt(resources.getString(R.string.idWhiteKing), R.drawable.white_king2);
+                    }
+                    editor.putString(resources.getString(R.string.selectedDraughtSet), item.file);
                     editor.commit();
                     //Обновляем выбранную иконку и ее краткое описание
                     selectedIconFile = item.file;
