@@ -1,6 +1,5 @@
 package ru.bstu.checkers;
 
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -11,15 +10,14 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
-public class ExitGameDialogFragment extends DialogFragment {
-
+public class GameOverDialogFragment extends DialogFragment {
     /* The activity that creates an instance of this dialog fragment must
      * implement this interface in order to receive event callbacks.
      * Each method passes the DialogFragment in case the host needs to query it. */
     public interface NoticeDialogListener {
-        public void onExitGameDialogPositiveClick(DialogFragment dialog);
-        public void onExitGameDialogNegativeClick(DialogFragment dialog);
+        public void onGameOverDialogClick(DialogFragment dialog);
     }
 
     // Use this instance of the interface to deliver action events
@@ -51,19 +49,14 @@ public class ExitGameDialogFragment extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         LayoutInflater inflater = getActivity().getLayoutInflater();
-        View view = inflater.inflate(R.layout.dialog_exitgame, null);
+        View view = inflater.inflate(R.layout.dialog_gameover, null);
         builder.setView(view);
-        view.findViewById(R.id.exitDialogYes).setOnClickListener(new View.OnClickListener() {
+        TextView title = view.findViewById(R.id.gameOverDialogTitle);
+        title.setText(getArguments().getString(getResources().getString(R.string.winner)));
+        title.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onExitGameDialogPositiveClick(ExitGameDialogFragment.this);
-                dismiss();
-            }
-        });
-        view.findViewById(R.id.exitDialogNo).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mListener.onExitGameDialogNegativeClick(ExitGameDialogFragment.this);
+                mListener.onGameOverDialogClick(GameOverDialogFragment.this);
                 dismiss();
             }
         });

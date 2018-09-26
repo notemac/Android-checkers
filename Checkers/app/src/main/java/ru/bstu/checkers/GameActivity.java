@@ -15,7 +15,8 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 public class GameActivity extends Activity
-        implements View.OnClickListener, ExitGameDialogFragment.NoticeDialogListener {
+        implements View.OnClickListener, ExitGameDialogFragment.NoticeDialogListener,
+                GameOverDialogFragment.NoticeDialogListener{
 
     String draughtsSet;
     GameEngine gameEngine;
@@ -55,6 +56,7 @@ public class GameActivity extends Activity
         {
             draughtsSet = updatedDraughtsSet;
             gameEngine.LoadDraughtsSet();
+            gameEngine.UpdateDraughtsSetForBackMove();
         }
         // TODO: 9/26/2018 сделать вызов PreferencesActivity через startActivityForResult и в OnActivityResult вызывать LoadDraughtsSet
 
@@ -77,6 +79,12 @@ public class GameActivity extends Activity
         Intent intent;
         switch (item.getItemId()) {
             case R.id.actionbar_backmove:
+                if (gameEngine.BackMoveExist())
+                {
+                    gameEngine.PrepareForBackMove();
+                    gameEngine.BackMove();
+                    gameEngine.SearchForAllMoves();
+                }
                 return true;
             case R.id.actionbar_settings:
                 intent = new Intent(this, PreferencesActivity.class);
@@ -87,33 +95,13 @@ public class GameActivity extends Activity
                 return  true;
             case R.id.actionbar_exitgame:
                 ExitGameDialogFragment dialog = new ExitGameDialogFragment();
-                dialog.show(getFragmentManager(), "EGDF");
-                return  true;
+                dialog.show(getFragmentManager(), getResources().getString(R.string.exitDialog));
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-
-    /** Игрок решил сделать ход/побить другой шашкой или кликнул второй раз не туда.
-     * id - идентификатор шашки/клетки, куда кликнул игрок.*/
-    private void RepickMove(int id)
-    {
-       gameEngine.PrepareForNextMove(true);
-        if (gameEngine.CheckTurn(id)) {
-            if (gameEngine.isMove) {
-                if (gameEngine.CheckMove()) {
-                    gameEngine.HighlightMoves();
-                    gameEngine.isNeedSecondClick = true;
-                }
-            } else if (gameEngine.isJump) {
-                if (gameEngine.CheckJump()) {
-                    gameEngine.HighlightMoves();
-                    gameEngine.isNeedSecondClick = true;
-                }
-            }
-        }
-    }
 
     @Override
     public void onClick(View v)
@@ -127,10 +115,10 @@ public class GameActivity extends Activity
                 {
                     gameEngine.PrepareForNextMove(false);
                     gameEngine.NextTurn();
-                    gameEngine.SearchForAllMoves();// Игрок сделал ход, теперь ищем ходы для другого игрока
+                    gameEngine.SearchForAllMoves();
                 }
                 else {
-                    RepickMove(id);
+                    gameEngine.RepickMove(id);
                 }
             }
             else if (gameEngine.isJump)
@@ -145,7 +133,7 @@ public class GameActivity extends Activity
                     }
                 }
                 else {
-                    RepickMove(id);
+                   gameEngine.RepickMove(id);
                 }
             }
         }
@@ -167,12 +155,19 @@ public class GameActivity extends Activity
                     gameEngine.isNeedSecondClick = true;
                 }
             }
-            else // Ходов нет
-            {
-                Toast.makeText(this, "Player " +
-                        ((gameEngine.turn == Item.ITEM_TYPE.white) ? "1" : "2") + " is WINNER!",
-                        Toast.LENGTH_LONG).show();
-            }
+        }
+        if (gameEngine.GameOver())
+        {
+            String winner;
+            if (gameEngine.turn == Item.ITEM_TYPE.white)
+                winner = "Player 2 is WINNER!";
+            else
+                winner = "Player 1 is WINNER!";
+            GameOverDialogFragment dialog = new GameOverDialogFragment();
+            Bundle args = new Bundle();
+            args.putString(getResources().getString(R.string.winner), winner);
+            dialog.setArguments(args);
+            dialog.show(getFragmentManager(), getResources().getString(R.string.gameOverDialog));
         }
     }
 
@@ -180,18 +175,16 @@ public class GameActivity extends Activity
     public void onBackPressed() { }
 
     @Override
-    public void onDialogPositiveClick(DialogFragment dialog) {
-        finish();
-    }
+    public void onExitGameDialogPositiveClick(DialogFragment dialog) { finish(); }
 
     @Override
-    public void onDialogNegativeClick(DialogFragment dialog) {
+    public void onExitGameDialogNegativeClick(DialogFragment dialog) { }
 
-    }
+    @Override
+    public void onGameOverDialogClick(DialogFragment dialog) { finish(); }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        gameEngine.ExitGame();
     }
 }

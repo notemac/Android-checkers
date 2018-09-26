@@ -94,7 +94,7 @@
         <item name="android:layout_width">150dp</item>
         <item name="android:layout_height">50dp</item>
         <item name="android:clickable">true</item>
-        <item name="android:background">@drawable/exitdialog_item</item>
+        <item name="android:background">@drawable/dialog_item</item>
         <item name="android:gravity">center</item>
         <item name="android:textColor">@color/menu_item_color</item>
         <item name="android:textSize">30sp</item>

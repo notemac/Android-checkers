@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center">
+
+
+    <ImageView
+        android:id="@+id/big_black_draught"
+        android:layout_width="@dimen/big_draught_size"
+        android:layout_height="@dimen/big_draught_size"
+        android:src="@drawable/big_black_draught"
+        android:layout_gravity="right"/>
+
+    <TextView
+        android:id="@+id/menu_newgame"
+        android:text="@string/text_tv_menu_newgame"
+        style="@style/MenuItem" />
+
+    <TextView
+        android:id="@+id/menu_loadgame"
+        android:text="@string/text_tv_menu_loadgame"
+        style="@style/MenuItem"/>
+
+    <TextView
+        android:id="@+id/menu_settings"
+        android:text="@string/text_tv_menu_settings"
+        style="@style/MenuItem"/>
+
+    <TextView
+        android:id="@+id/menu_exitapp"
+        android:text="@string/text_tv_menu_exitgame"
+        style="@style/MenuItem"/>
+
+    <ImageView
+        android:id="@+id/big_white_draught"
+        android:layout_width="@dimen/big_draught_size"
+        android:layout_height="@dimen/big_draught_size"
+        android:src="@drawable/big_white_draught"
+        android:layout_gravity="left" />
+</LinearLayout>
