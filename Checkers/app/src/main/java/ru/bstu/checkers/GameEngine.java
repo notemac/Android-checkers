@@ -3,6 +3,7 @@ package ru.bstu.checkers;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.view.View;
@@ -24,58 +25,62 @@ import ru.bstu.checkers.Item.ITEM_TYPE;
  * т.е. она не может бить далее на g3 и h2.
  */
 
+// TODO: 9/26/2018 Fix bug: шашка превращается в дамку и продолжает бить по этой же диагонали назад
 
 public class GameEngine {
-    public static Activity gameActivity;
+    private Activity gameActivity;
     /**
      * Item, на который игрок кликнул первый раз
      */
-    private static Item selectedFirstItem = null;
-    private static Item selectedSecondItem = null;
+    private Item selectedFirstItem = null;
+    private Item selectedSecondItem = null;
     /**
      * Надо бить? (Бить обязательно)
      */
-    public static boolean isJump = false;
+    public boolean isJump = false;
     /**
      * Есть куда ходить? (Если нечего бить)
      */
-    public static boolean isMove = false;
+    public boolean isMove = false;
     /**
      * Шашка выбрана, необходимо сделать ход/побить (т.е. клинуть второй раз)
      */
-    public static boolean isNeedSecondClick = false;
+    public boolean isNeedSecondClick = false;
     /**
      * Очередь хода
      */
-    public static ITEM_TYPE turn = ITEM_TYPE.white;
+    public ITEM_TYPE turn = ITEM_TYPE.white;
     /**
      * Массив диагоналей (ways) представляет игровую доску.
      * В каждом way[i] хранятся шашки и пустые клетки, лежащие на этой диагонали.
      */
-    public static ArrayList<Item>[] ways;
+    public ArrayList<Item>[] ways;
+
     /**
      * Массив из списков ходов. Т.е. куда может пойти шашка. Первый элемент списка
      * всегда шашка; все остальные элементы - клетки, куда может пойти эта шашка.
      */
-    public static ArrayList<LinkedList<Item>> moves;
+    public ArrayList<LinkedList<Item>> moves;
     /**
      * Список из списков с ходами, куда шашка может побить. Первый элемент списка всегда бьющая шашка;
      * второй - шашка, которая под боем; все остальные элементы - клетки, где может оказаться бьющая шашка после битья.
      * Т.о. если шашка может бить одновременно в разные стороны, то для нее будет создано несколько списков,
      * в которых первым элементом будет эта шашка.
      */
-    public static LinkedList<LinkedList<Item>> jumps;
+    public LinkedList<LinkedList<Item>> jumps;
 
     /**
      * Клетки, на которых шашки превращаются в дамки. kingSquares[0] - для черных, kingSquares[1] - для белых
      */
-    public static int[][] kingSquares;
+    public int[][] kingSquares;
 
-    /**
-     * Список всех побитых шашек за текущий ход
-     */
-    //private static LinkedList<Item> deadItems;
-    public static void Init() {
+
+    public void Init(Activity activity) {
+        gameActivity = activity;
+        selectedFirstItem = selectedSecondItem = null;
+        isJump = isMove = isNeedSecondClick = false;
+        turn = ITEM_TYPE.white;
+
         kingSquares = new int[2][4];
         kingSquares[0][0] = R.id.a1;
         kingSquares[0][1] = R.id.c1;
@@ -303,7 +308,7 @@ public class GameEngine {
     /**
      * Добавить возможный ход-move для шашки-item
      */
-    private static void AddMove(Item item, Item move) {
+    private void AddMove(Item item, Item move) {
         for (int i = 0; i < moves.size(); ++i) {
             LinkedList<Item> items = moves.get(i);
             if (items.contains(item)) {
@@ -321,7 +326,7 @@ public class GameEngine {
      * Добавить возможный ход-move для шашки-itemJump при взятии шашки-itemOff.
      * Метод возвращает индекс списка в jumps, в который сделали запись.
      */
-    private static int AddJump(Item itemJump, Item itemOff, Item move) {
+    private int AddJump(Item itemJump, Item itemOff, Item move) {
         for (int i = 0; i < jumps.size(); ++i) {
             LinkedList<Item> items = jumps.get(i);
             if (items.contains(itemJump) && items.contains(itemOff)) {
@@ -341,7 +346,7 @@ public class GameEngine {
     /**
      * Ищем ходы, куда шашка item может побить далее
      */
-    public static boolean SearchForNextJump() {
+    public boolean SearchForNextJump() {
         // Ищем диагонали, на которых лежит шашка
         for (int i = 0; i < Item.WAYS_COUNT; ++i) {
             if (selectedSecondItem.ways[i]) {
@@ -423,7 +428,7 @@ public class GameEngine {
     /**
      * Игрок кликнул на свою шашку? Если да, запомним ее как selectedItem
      */
-    public static boolean CheckTurn(int id) {
+    public boolean CheckTurn(int id) {
         // Проходим по всем диагоналям
         for (int i = 0; i < ways.length; ++i) {
             int way_size = ways[i].size();
@@ -446,7 +451,7 @@ public class GameEngine {
     /**
      * Подсвечивает возможные ходы
      */
-    public static void HighlightMoves() {
+    public void HighlightMoves() {
         gameActivity.findViewById(selectedFirstItem.id).setBackgroundResource(R.color.colorRed);
         if (isJump) {
             for (int i = 0; i < jumps.size(); ++i) {
@@ -468,16 +473,8 @@ public class GameEngine {
             }
         }
     }
-
-    /**
-     * Убрать подсветку клеток
-     */
-    public static void RemoveHighlighting() {
-
-    }
-
-
-    public static void PrepareForNextMove(boolean isRepick) {
+    
+    public void PrepareForNextMove(boolean isRepick) {
         gameActivity.findViewById(selectedFirstItem.id).setBackgroundResource(R.drawable.black_square);
         if (isJump) {
             for (int i = 0; i < jumps.size(); ++i) {
@@ -510,7 +507,7 @@ public class GameEngine {
     /**
      * Выбранная шашка selectedFirstItem может бить?
      */
-    public static boolean CheckJump() {
+    public boolean CheckJump() {
         for (int i = 0; i < jumps.size(); ++i) {
             if (jumps.get(i).get(0).id == selectedFirstItem.id) {
                 return true;
@@ -522,7 +519,7 @@ public class GameEngine {
     /**
      * Выбранная шашка selectedFirstItem может ходить?
      */
-    public static boolean CheckMove() {
+    public boolean CheckMove() {
         for (int i = 0; i < moves.size(); ++i) {
             if (moves.get(i).get(0).id == selectedFirstItem.id)
                 return true;
@@ -533,7 +530,7 @@ public class GameEngine {
     /**
      * Бьем выбранной шашкой selectedItem на клетку с идентификатором id.
      */
-    public static boolean Jump(int id) {
+    public boolean Jump(int id) {
         // Ищем выбранную шашку среди всех шашек, которые могут бить
         for (int i = 0; i < jumps.size(); ++i) {
             LinkedList<Item> items = jumps.get(i);
@@ -591,7 +588,7 @@ public class GameEngine {
     /**
      * Делаем ход выбранной шашкой selectedItem на клетку с идентификатором id.
      */
-    public static boolean Move(int id) {
+    public boolean Move(int id) {
         // Ищем выбранную шашку среди всех шашек, которые могут ходить
         for (int i = 0; i < moves.size(); ++i) {
             LinkedList<Item> items = moves.get(i);
@@ -646,8 +643,8 @@ public class GameEngine {
     /**
      * Изменить очередь хода
      */
-    public static void NextTurn() {
-        if (GameEngine.turn == Item.ITEM_TYPE.white) {
+    public void NextTurn() {
+        if (turn == Item.ITEM_TYPE.white) {
             gameActivity.findViewById(R.id.iv_timer1).setVisibility(View.INVISIBLE);
             gameActivity.findViewById(R.id.iv_timer2).setVisibility(View.VISIBLE);
             turn = Item.ITEM_TYPE.black;
@@ -658,7 +655,7 @@ public class GameEngine {
         }
     }
 
-    static private boolean RemoveFakeJumpsUp(Item king, int idxItem, int s, Item item, LinkedList<Item> ongoingJumps, LinkedList<Item> undecidedJumps) {
+    private boolean RemoveFakeJumpsUp(Item king, int idxItem, int s, Item item, LinkedList<Item> ongoingJumps, LinkedList<Item> undecidedJumps) {
         int way_size = ways[s].size();
         boolean ongoing = false;
         int k = idxItem;
@@ -684,7 +681,7 @@ public class GameEngine {
         return false;
     }
 
-    static private boolean RemoveFakeJumpsDown(Item king, int idxItem, int s, Item item, LinkedList<Item> ongoingJumps, LinkedList<Item> undecidedJumps) {
+    private boolean RemoveFakeJumpsDown(Item king, int idxItem, int s, Item item, LinkedList<Item> ongoingJumps, LinkedList<Item> undecidedJumps) {
         boolean ongoing = false;
         int k = idxItem;
         //Пропускаем все пустые клетки до item (ИДЕМ ВНИЗ ПО ДИАГОНАЛИ)
@@ -714,7 +711,7 @@ public class GameEngine {
      * на двух разных клетках. С одной клетки она будет должна бить далее, а с другой нет.
      * Поэтому одну из клеток необходимо убрать из возможных ходов.
      */
-    static private void RemoveFakeJumps(int listJumpId) {
+    private void RemoveFakeJumps(int listJumpId) {
         LinkedList<Item> ongoingJumps = new LinkedList<Item>();
         LinkedList<Item> undecidedJumps = new LinkedList<Item>();
 
@@ -758,7 +755,7 @@ public class GameEngine {
     /**
      * Ищем все возможные ходы (надо бить или ходить)
      */
-    public static void SearchForAllMoves() {
+    public void SearchForAllMoves() {
 
         isJump = isMove = false;
         //Проходим по всем диагоналям
@@ -886,6 +883,45 @@ public class GameEngine {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    public void ExitGame()
+    {
+        selectedFirstItem = selectedSecondItem = null;
+        isJump = isMove = isNeedSecondClick = false;
+        turn = ITEM_TYPE.white;
+        jumps = null; moves = null;
+        ways = null;
+        kingSquares = null;
+    }
+
+    /** Загрузить выбранный набор шашек*/
+    public void LoadDraughtsSet()
+    {
+        Resources resources = gameActivity.getApplicationContext().getResources();
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(gameActivity.getApplicationContext());
+        int idBlackDraught = preferences.getInt(resources.getString(R.string.idBlackDraught), R.drawable.black_draught);
+        int idWhiteDraught = preferences.getInt(resources.getString(R.string.idWhiteDraught), R.drawable.white_draught);
+        int idBlackKing = preferences.getInt(resources.getString(R.string.idBlackKing), R.drawable.black_king);
+        int idWhiteKing = preferences.getInt(resources.getString(R.string.idWhiteKing), R.drawable.white_king);
+        for(int i = 0; i < ways.length; ++i)
+        {
+            ArrayList<Item> way = ways[i];
+            int way_size = way.size();
+            for(int j = 0; j < way_size; ++j) {
+                Item item = way.get(j);
+                ImageButton ib = gameActivity.findViewById(item.id);
+                if (item.type == Item.ITEM_TYPE.black)
+                {
+                    if(item.isKing) ib.setImageResource(idBlackKing);
+                    else ib.setImageResource(idBlackDraught);
+                }
+                else if (item.type == Item.ITEM_TYPE.white) {
+                    if (item.isKing) ib.setImageResource(idWhiteKing);
+                    else ib.setImageResource(idWhiteDraught);
                 }
             }
         }

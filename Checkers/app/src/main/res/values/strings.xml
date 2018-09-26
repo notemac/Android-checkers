@@ -21,15 +21,21 @@
     <string name="text_tv_player2_name">Player 2</string>
 
     <!--Имя дефолтной иконки для отображения в ListPreferences-->
-    <string name="default_draughtSet_file">draughts_set1</string>
+    <string name="defaultDraughtsSet">draughts_set1</string>
     <!--Ключ (имя иконки) для доступа к имени файла выбранной иконки в настройках приложения-->
-    <string name="selectedDraughtSet">customIconKey</string>
+    <string name="selectedDraughtsSet">customIconKey</string>
 
 
     <string name="idBlackDraught">idBlackDraught</string>
     <string name="idWhiteDraught">idWhiteDraught</string>
     <string name="idBlackKing">idBlackKing</string>
     <string name="idWhiteKing">idWhiteKing</string>
+
+
+    <string name="exitDialogTitle">Exit game?</string>
+    <string name="exitDialogYes">Yes</string>
+    <string name="exitDialogNo">No</string>
+
 
     <!--Список имен иконок (т.е. ключи entries) -->
     <string-array name="iconNames">
@@ -41,4 +47,6 @@
         <item>draughts_set1</item>
         <item>draughts_set2</item>
     </string-array>
+
+
 </resources>

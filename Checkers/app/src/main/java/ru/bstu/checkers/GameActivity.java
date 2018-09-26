@@ -1,6 +1,7 @@
 package ru.bstu.checkers;
 
 import android.app.Activity;
+import android.app.DialogFragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -9,63 +10,54 @@ import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 
-public class GameActivity extends Activity implements View.OnClickListener{
+public class GameActivity extends Activity
+        implements View.OnClickListener, ExitGameDialogFragment.NoticeDialogListener {
 
-    private void ApplySettings()
-    {
-        Resources resources = this.getResources();
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        int idBlackDraught = preferences.getInt(resources.getString(R.string.idBlackDraught), R.drawable.black_draught);
-        int idWhiteDraught = preferences.getInt(resources.getString(R.string.idWhiteDraught), R.drawable.white_draught);
-        int idBlackKing = preferences.getInt(resources.getString(R.string.idBlackKing), R.drawable.black_king);
-        int idWhiteKing = preferences.getInt(resources.getString(R.string.idWhiteKing), R.drawable.white_king);
-        for(int i = 0; i < GameEngine.ways.length; ++i)
-        {
-            ArrayList<Item> way = GameEngine.ways[i];
-            int way_size = way.size();
-            for(int j = 0; j < way_size; ++j) {
-                Item item = way.get(j);
-                ImageButton ib = findViewById(item.id);
-                if (item.type == Item.ITEM_TYPE.black)
-                {
-                    if(item.isKing) ib.setImageResource(idBlackKing);
-                    else ib.setImageResource(idBlackDraught);
-                }
-                else if (item.type == Item.ITEM_TYPE.white) {
-                    if (item.isKing) ib.setImageResource(idWhiteKing);
-                    else ib.setImageResource(idWhiteDraught);
-                }
-            }
-        }
-        PreferencesActivity.isChangedSettings = false;
-    }
+    String draughtsSet;
+    GameEngine gameEngine;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
-        GameEngine.gameActivity = this;
+        gameEngine = new GameEngine();
+        gameEngine.Init(this);
+        gameEngine.SearchForAllMoves();
 
-        for(int i = 0; i < GameEngine.ways.length; ++i)
+        for(int i = 0; i < gameEngine.ways.length; ++i)
         {
-            ArrayList<Item> way = GameEngine.ways[i];
+            ArrayList<Item> way = gameEngine.ways[i];
             int way_size = way.size();
             for(int j = 0; j < way_size; ++j) {
                 findViewById(way.get(j).id).setOnClickListener(this);
             }
         }
-        ApplySettings();
+
+        Resources resources = this.getResources();
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        draughtsSet = preferences.getString(resources.getString(R.string.selectedDraughtsSet),
+                resources.getString(R.string.defaultDraughtsSet));
+        gameEngine.LoadDraughtsSet();
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (PreferencesActivity.isChangedSettings) ApplySettings();
+        Resources resources = this.getResources();
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String updatedDraughtsSet = preferences.getString(resources.getString(R.string.selectedDraughtsSet),
+                resources.getString(R.string.defaultDraughtsSet));
+        if (!updatedDraughtsSet.equals(draughtsSet))
+        {
+            draughtsSet = updatedDraughtsSet;
+            gameEngine.LoadDraughtsSet();
+        }
+        // TODO: 9/26/2018 сделать вызов PreferencesActivity через startActivityForResult и в OnActivityResult вызывать LoadDraughtsSet
+
     }
 
     @Override
@@ -94,28 +86,30 @@ public class GameActivity extends Activity implements View.OnClickListener{
                 Toast.makeText(this, "Game saved!", Toast.LENGTH_LONG).show();
                 return  true;
             case R.id.actionbar_exitgame:
-                finish();
+                ExitGameDialogFragment dialog = new ExitGameDialogFragment();
+                dialog.show(getFragmentManager(), "EGDF");
                 return  true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
+
     /** Игрок решил сделать ход/побить другой шашкой или кликнул второй раз не туда.
      * id - идентификатор шашки/клетки, куда кликнул игрок.*/
     private void RepickMove(int id)
     {
-        GameEngine.PrepareForNextMove(true);
-        if (GameEngine.CheckTurn(id)) {
-            if (GameEngine.isMove) {
-                if (GameEngine.CheckMove()) {
-                    GameEngine.HighlightMoves();
-                    GameEngine.isNeedSecondClick = true;
+       gameEngine.PrepareForNextMove(true);
+        if (gameEngine.CheckTurn(id)) {
+            if (gameEngine.isMove) {
+                if (gameEngine.CheckMove()) {
+                    gameEngine.HighlightMoves();
+                    gameEngine.isNeedSecondClick = true;
                 }
-            } else if (GameEngine.isJump) {
-                if (GameEngine.CheckJump()) {
-                    GameEngine.HighlightMoves();
-                    GameEngine.isNeedSecondClick = true;
+            } else if (gameEngine.isJump) {
+                if (gameEngine.CheckJump()) {
+                    gameEngine.HighlightMoves();
+                    gameEngine.isNeedSecondClick = true;
                 }
             }
         }
@@ -125,29 +119,29 @@ public class GameActivity extends Activity implements View.OnClickListener{
     public void onClick(View v)
     {
         int id = v.getId();
-        if (GameEngine.isNeedSecondClick)
+        if (gameEngine.isNeedSecondClick)
         {
-            if (GameEngine.isMove) // Надо ходить
+            if (gameEngine.isMove) // Надо ходить
             {
-                if (GameEngine.Move(id))
+                if (gameEngine.Move(id))
                 {
-                    GameEngine.PrepareForNextMove(false);
-                    GameEngine.NextTurn();
-                    GameEngine.SearchForAllMoves();// Игрок сделал ход, теперь ищем ходы для другого игрока
+                    gameEngine.PrepareForNextMove(false);
+                    gameEngine.NextTurn();
+                    gameEngine.SearchForAllMoves();// Игрок сделал ход, теперь ищем ходы для другого игрока
                 }
                 else {
                     RepickMove(id);
                 }
             }
-            else if (GameEngine.isJump)
+            else if (gameEngine.isJump)
             {
-                if (GameEngine.Jump(id))
+                if (gameEngine.Jump(id))
                 {
-                    GameEngine.PrepareForNextMove(false);
-                    if (!GameEngine.SearchForNextJump())
+                    gameEngine.PrepareForNextMove(false);
+                    if (!gameEngine.SearchForNextJump())
                     {
-                        GameEngine.NextTurn();
-                        GameEngine.SearchForAllMoves();
+                        gameEngine.NextTurn();
+                        gameEngine.SearchForAllMoves();
                     }
                 }
                 else {
@@ -155,30 +149,49 @@ public class GameActivity extends Activity implements View.OnClickListener{
                 }
             }
         }
-        else if (GameEngine.CheckTurn(id))
+        else if (gameEngine.CheckTurn(id))
         {
-            if (GameEngine.isMove)
+            if (gameEngine.isMove)
             {
-                if (GameEngine.CheckMove())
+                if (gameEngine.CheckMove())
                 {
-                    GameEngine.HighlightMoves();
-                    GameEngine.isNeedSecondClick = true;
+                    gameEngine.HighlightMoves();
+                    gameEngine.isNeedSecondClick = true;
                 }
             }
-            else if (GameEngine.isJump)
+            else if (gameEngine.isJump)
             {
-                if (GameEngine.CheckJump())
+                if (gameEngine.CheckJump())
                 {
-                    GameEngine.HighlightMoves();
-                    GameEngine.isNeedSecondClick = true;
+                    gameEngine.HighlightMoves();
+                    gameEngine.isNeedSecondClick = true;
                 }
             }
             else // Ходов нет
             {
                 Toast.makeText(this, "Player " +
-                        ((GameEngine.turn == Item.ITEM_TYPE.white) ? "1" : "2") + " is WINNER!",
+                        ((gameEngine.turn == Item.ITEM_TYPE.white) ? "1" : "2") + " is WINNER!",
                         Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    @Override
+    public void onBackPressed() { }
+
+    @Override
+    public void onDialogPositiveClick(DialogFragment dialog) {
+        finish();
+    }
+
+    @Override
+    public void onDialogNegativeClick(DialogFragment dialog) {
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        gameEngine.ExitGame();
     }
 }

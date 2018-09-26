@@ -14,7 +14,6 @@ import android.widget.TextView;
  В методе OnCreate загружается объект PreferencesFragment, который содержит разметку окна настроек
  */
 public class PreferencesActivity extends Activity {
-    public static boolean isChangedSettings;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,7 +23,6 @@ public class PreferencesActivity extends Activity {
         FragmentTransaction ft = fm.beginTransaction();
         ft.replace(android.R.id.content, preferencesFragment);
         ft.commit();
-        isChangedSettings = false;
     }
 
     @Override
@@ -44,8 +42,4 @@ public class PreferencesActivity extends Activity {
         super.onDestroy();
     }
 
-    @Override
-    public void onBackPressed() {
-        onNavigateUp();
-    }
 }
