@@ -8,6 +8,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
     <TextView
+        android:id="@+id/exitDialogTitle"
         android:layout_width="330dp"
         android:layout_height="90dp"
         android:gravity = "center"
@@ -16,7 +17,7 @@
         android:textColor="@android:color/black"
         android:textStyle = "bold|italic"
         android:textSize = "45sp"
-        android:background = "@drawable/exitdialog_item"/>
+        android:background = "@drawable/dialog_item"/>
     </LinearLayout>
 
     <LinearLayout

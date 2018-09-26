@@ -9,7 +9,10 @@ import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.ImageButton;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 
 
@@ -26,8 +29,51 @@ import ru.bstu.checkers.Item.ITEM_TYPE;
  */
 
 // TODO: 9/26/2018 Fix bug: шашка превращается в дамку и продолжает бить по этой же диагонали назад
+// TODO: 9/27/2018 Code review: пересмотреть весь код, связанный с BackMove(). В некоторых местах можно оптимизировать.
+// TODO: 9/27/2018 ??? Сравнивать ways у Item через ways1.equals(ways2), т.е. ways никогда не изменяются ???
+// TODO: 9/27/2018 ??? Использовать для ways у Item массив из 2 Integer (номера диагоналей) ???
 
 public class GameEngine {
+
+    private class PrevMove {
+        private ArrayList<Item> items;
+        private ArrayList<Integer> imageId;
+        private ITEM_TYPE turn;
+        public PrevMove() {
+            items = new ArrayList<>(3);
+            imageId = new ArrayList<>(3);
+        }
+        public void SetTurn(ITEM_TYPE turn) { this.turn = turn; }
+        public ITEM_TYPE GetTurn() { return this.turn; }
+        public void Add(Item from, int fromImageId, Item to, int toImageId)
+        {
+            items.clear();
+            items.add(from);
+            items.add(to);
+            imageId.clear();
+            imageId.add(fromImageId);
+            imageId.add(toImageId);
+        }
+        public void Add(Item from, int fromImageId, Item middle, int middleImageId, Item to, int toImageId)
+        {
+            items.clear();
+            items.add(from);
+            items.add(middle);
+            items.add(to);
+            imageId.clear();
+            imageId.add(fromImageId);
+            imageId.add(middleImageId);
+            imageId.add(toImageId);
+        }
+        public boolean Exist() { return (!items.isEmpty() && !imageId.isEmpty()); }
+        public void Clear()
+        {
+            items.clear();
+            imageId.clear();
+        }
+    }
+
+    private PrevMove prevMove;
     private Activity gameActivity;
     /**
      * Item, на который игрок кликнул первый раз
@@ -74,8 +120,8 @@ public class GameEngine {
      */
     public int[][] kingSquares;
 
-
     public void Init(Activity activity) {
+        prevMove = new PrevMove();
         gameActivity = activity;
         selectedFirstItem = selectedSecondItem = null;
         isJump = isMove = isNeedSecondClick = false;
@@ -473,8 +519,9 @@ public class GameEngine {
             }
         }
     }
-    
-    public void PrepareForNextMove(boolean isRepick) {
+
+    private void RemoveHighlighting()
+    {
         gameActivity.findViewById(selectedFirstItem.id).setBackgroundResource(R.drawable.black_square);
         if (isJump) {
             for (int i = 0; i < jumps.size(); ++i) {
@@ -495,11 +542,26 @@ public class GameEngine {
                 }
             }
         }
+    }
+
+    public void PrepareForNextMove(boolean isRepick)
+    {
+        RemoveHighlighting();
         if (!isRepick) {
             isJump = isMove = false;
             moves.clear();
             jumps.clear();
         }
+        isNeedSecondClick = false;
+        selectedFirstItem = null;
+    }
+
+    public void PrepareForBackMove()
+    {
+        if (selectedFirstItem != null) RemoveHighlighting();
+        isJump = isMove = false;
+        moves.clear();
+        jumps.clear();
         isNeedSecondClick = false;
         selectedFirstItem = null;
     }
@@ -542,6 +604,16 @@ public class GameEngine {
                     {
                         selectedSecondItem = toItem;
 
+                        ImageButton from = gameActivity.findViewById(selectedFirstItem.id);
+                        ImageButton middle = gameActivity.findViewById(items.get(1).id);
+                        ImageButton to = gameActivity.findViewById(id);
+                        int fromTag = (int)(from.getTag());
+                        int middleTag = (int)(middle.getTag());
+                        int toTag = (int)(to.getTag());
+                        prevMove.Add(selectedFirstItem.Clone(), fromTag,
+                                items.get(1).Clone(), middleTag,  toItem.Clone(), toTag);
+                        prevMove.SetTurn(turn);
+
                         //Превращаем в дамку простую шашку, если встали на дамочное поле
                         if (!selectedFirstItem.isKing) {
                             for (int k = 0; k < 4; ++k) {
@@ -559,30 +631,101 @@ public class GameEngine {
                         toItem.type = selectedFirstItem.type;
                         selectedFirstItem.type = ITEM_TYPE.square;
 
-                        // Перемещаем шашку на экране
-                        ImageButton from = gameActivity.findViewById(selectedFirstItem.id);
-                        ImageButton middle = gameActivity.findViewById(items.get(1).id);
-                        ImageButton to = gameActivity.findViewById(id);
-                        Drawable d = from.getDrawable();
-                        from.setImageDrawable(to.getDrawable());
+
+                        from.setImageResource(R.drawable.black_square);
+                        from.setTag(R.drawable.black_square);
+
 
                         if (toItem.isKing) {
                             Context context = gameActivity.getApplicationContext();
                             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
                             if (toItem.type == ITEM_TYPE.black)
-                                to.setImageResource(preferences.getInt(context.getResources()
-                                        .getString(R.string.idBlackKing), R.drawable.black_king));
-                            else
-                                to.setImageResource(preferences.getInt(context.getResources()
-                                        .getString(R.string.idWhiteKing), R.drawable.white_king));
-                        } else to.setImageDrawable(d);
-                        middle.setImageDrawable(from.getDrawable());
+                            {
+                                int imageId = preferences.getInt(context.getResources()
+                                        .getString(R.string.idBlackKing), R.drawable.black_king);
+                                to.setImageResource(imageId);
+                                to.setTag(imageId);
+                            }
+                            else {
+                                int imageId = preferences.getInt(context.getResources()
+                                        .getString(R.string.idWhiteKing), R.drawable.white_king);
+                                to.setImageResource(imageId);
+                                to.setTag(imageId);
+                            }
+                        } else {
+                            to.setImageResource(fromTag);
+                            to.setTag(fromTag);
+                        }
+
+                        middle.setImageResource(R.drawable.black_square);
+                        middle.setTag(R.drawable.black_square);
                         return true;
                     }
                 }
             }
         }
         return false;
+    }
+
+    public boolean BackMoveExist() { return prevMove.Exist(); }
+    public void BackMove()
+    {
+        turn = prevMove.turn;
+        if (turn == Item.ITEM_TYPE.white) {
+            gameActivity.findViewById(R.id.iv_timer2).setVisibility(View.INVISIBLE);
+            gameActivity.findViewById(R.id.iv_timer1).setVisibility(View.VISIBLE);
+        } else {
+            gameActivity.findViewById(R.id.iv_timer1).setVisibility(View.INVISIBLE);
+            gameActivity.findViewById(R.id.iv_timer2).setVisibility(View.VISIBLE);
+        }
+        for(int i = 0; i < prevMove.items.size(); ++i)
+        {
+            for(int j = 0; j < Item.WAYS_COUNT; ++j)
+            {
+                for (int k = 0; k < ways[j].size(); ++k)
+                {
+                    Item item = prevMove.items.get(i);
+                    if (item.ways.equals(ways[j].get(k).ways))
+                    {
+                        ImageButton ib = gameActivity.findViewById(item.id);
+                        ib.setImageResource(prevMove.imageId.get(i));
+                        ib.setTag(prevMove.imageId.get(i));
+                        ways[j].set(k, item);
+                        break;
+                    }
+                }
+            }
+        }
+        prevMove.Clear();
+    }
+
+
+    public void UpdateDraughtsSetForBackMove()
+    {
+        for(int i = 0; i < prevMove.items.size(); ++i)
+        {
+            Resources resources = gameActivity.getApplicationContext().getResources();
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(gameActivity.getApplicationContext());
+            int idBlackDraught = preferences.getInt(resources.getString(R.string.idBlackDraught), R.drawable.black_draught);
+            int idWhiteDraught = preferences.getInt(resources.getString(R.string.idWhiteDraught), R.drawable.white_draught);
+            int idBlackKing = preferences.getInt(resources.getString(R.string.idBlackKing), R.drawable.black_king);
+            int idWhiteKing = preferences.getInt(resources.getString(R.string.idWhiteKing), R.drawable.white_king);
+            Item item = prevMove.items.get(i);
+            if (item.type == ITEM_TYPE.black)
+            {
+                if (item.isKing)
+                    prevMove.imageId.set(i, idBlackKing);
+                else
+                    prevMove.imageId.set(i, idBlackDraught);
+            }
+            else if (item.type == ITEM_TYPE.white)
+            {
+                if (item.isKing)
+                    prevMove.imageId.set(i, idWhiteKing);
+                else
+                    prevMove.imageId.set(i, idWhiteDraught);
+            }
+        }
     }
 
     /**
@@ -598,6 +741,15 @@ public class GameEngine {
                     Item toItem = items.get(j);
                     if (toItem.id == id)// Можем ходить на клетку с идентификатором id?
                     {
+
+                        ImageButton from = gameActivity.findViewById(selectedFirstItem.id);
+                        ImageButton to = gameActivity.findViewById(toItem.id);
+
+                        int fromTag = (int)(from.getTag());
+                        int toTag = (int)(to.getTag());
+                        prevMove.Add(selectedFirstItem.Clone(), fromTag, toItem.Clone(), toTag);
+                        prevMove.SetTurn(turn);
+
                         //Превращаем в дамку простую шашку, если встали на дамочное поле
                         if (!selectedFirstItem.isKing) {
                             for (int k = 0; k < 4; ++k) {
@@ -613,22 +765,28 @@ public class GameEngine {
                         toItem.type = selectedFirstItem.type;
                         selectedFirstItem.type = ITEM_TYPE.square;
 
-                        // Перемещаем шашку на экране
-                        ImageButton from = gameActivity.findViewById(selectedFirstItem.id);
-                        ImageButton to = gameActivity.findViewById(id);
-                        Drawable d = from.getDrawable();
-                        from.setImageDrawable(to.getDrawable());
+                        from.setImageResource(R.drawable.black_square);
+                        from.setTag(R.drawable.black_square);
 
                         if (toItem.isKing) {
                             Context context = gameActivity.getApplicationContext();
                             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-                            if (toItem.type == ITEM_TYPE.black)
-                                to.setImageResource(preferences.getInt(context.getResources()
-                                        .getString(R.string.idBlackKing), R.drawable.black_king));
-                            else
-                                to.setImageResource(preferences.getInt(context.getResources()
-                                        .getString(R.string.idWhiteKing), R.drawable.white_king));
-                        } else to.setImageDrawable(d);
+                            if (toItem.type == ITEM_TYPE.black) {
+                                int imageId = preferences.getInt(context.getResources()
+                                        .getString(R.string.idBlackKing), R.drawable.black_king);
+                                to.setImageResource(imageId);
+                                to.setTag(imageId);
+                            }
+                            else {
+                                int imageId = preferences.getInt(context.getResources()
+                                        .getString(R.string.idWhiteKing), R.drawable.white_king);
+                                to.setImageResource(imageId);
+                                to.setTag(imageId);
+                            }
+                        } else {
+                            to.setImageResource(fromTag);
+                            to.setTag(fromTag);
+                        }
                         return true;
                     }
                 }
@@ -649,8 +807,8 @@ public class GameEngine {
             gameActivity.findViewById(R.id.iv_timer2).setVisibility(View.VISIBLE);
             turn = Item.ITEM_TYPE.black;
         } else {
-            gameActivity.findViewById(R.id.iv_timer1).setVisibility(View.VISIBLE);
             gameActivity.findViewById(R.id.iv_timer2).setVisibility(View.INVISIBLE);
+            gameActivity.findViewById(R.id.iv_timer1).setVisibility(View.VISIBLE);
             turn = ITEM_TYPE.white;
         }
     }
@@ -888,15 +1046,6 @@ public class GameEngine {
         }
     }
 
-    public void ExitGame()
-    {
-        selectedFirstItem = selectedSecondItem = null;
-        isJump = isMove = isNeedSecondClick = false;
-        turn = ITEM_TYPE.white;
-        jumps = null; moves = null;
-        ways = null;
-        kingSquares = null;
-    }
 
     /** Загрузить выбранный набор шашек*/
     public void LoadDraughtsSet()
@@ -910,21 +1059,62 @@ public class GameEngine {
         for(int i = 0; i < ways.length; ++i)
         {
             ArrayList<Item> way = ways[i];
-            int way_size = way.size();
-            for(int j = 0; j < way_size; ++j) {
+            for(int j = 0; j < way.size(); ++j) {
                 Item item = way.get(j);
                 ImageButton ib = gameActivity.findViewById(item.id);
                 if (item.type == Item.ITEM_TYPE.black)
                 {
-                    if(item.isKing) ib.setImageResource(idBlackKing);
-                    else ib.setImageResource(idBlackDraught);
+                    if(item.isKing)
+                    {
+                        ib.setImageResource(idBlackKing);
+                        ib.setTag(idBlackKing);
+                    }
+                    else {
+                        ib.setImageResource(idBlackDraught);
+                        ib.setTag(idBlackDraught);
+                    }
                 }
                 else if (item.type == Item.ITEM_TYPE.white) {
-                    if (item.isKing) ib.setImageResource(idWhiteKing);
-                    else ib.setImageResource(idWhiteDraught);
+                    if (item.isKing) {
+                        ib.setImageResource(idWhiteKing);
+                        ib.setTag(idWhiteKing);
+                    }
+                    else {
+                        ib.setImageResource(idWhiteDraught);
+                        ib.setTag(idWhiteDraught);
+                    }
+                }
+                else {
+                    ib.setImageResource(R.drawable.black_square);
+                    ib.setTag(R.drawable.black_square);
                 }
             }
         }
+    }
+
+    /** Игрок решил сделать ход/побить другой шашкой или кликнул второй раз не туда.
+     * id - идентификатор шашки/клетки, куда кликнул игрок.*/
+    public void RepickMove(int id)
+    {
+        PrepareForNextMove(true);
+        if (CheckTurn(id)) {
+            if (isMove) {
+                if (CheckMove()) {
+                    HighlightMoves();
+                    isNeedSecondClick = true;
+                }
+            } else if (isJump) {
+                if (CheckJump()) {
+                    HighlightMoves();
+                    isNeedSecondClick = true;
+                }
+            }
+        }
+    }
+
+    public boolean GameOver()
+    {
+        return (!isJump && !isMove);
     }
 }
 

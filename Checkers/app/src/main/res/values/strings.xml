@@ -32,10 +32,13 @@
     <string name="idWhiteKing">idWhiteKing</string>
 
 
+    <string name="exitDialog">EGDF</string>
     <string name="exitDialogTitle">Exit game?</string>
     <string name="exitDialogYes">Yes</string>
     <string name="exitDialogNo">No</string>
 
+    <string name="gameOverDialog">GODF</string>
+    <string name="winner">winner</string>
 
     <!--Список имен иконок (т.е. ключи entries) -->
     <string-array name="iconNames">
