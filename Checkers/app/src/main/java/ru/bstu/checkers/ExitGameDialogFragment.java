@@ -18,8 +18,8 @@ public class ExitGameDialogFragment extends DialogFragment {
      * implement this interface in order to receive event callbacks.
      * Each method passes the DialogFragment in case the host needs to query it. */
     public interface NoticeDialogListener {
-        public void onExitGameDialogPositiveClick(DialogFragment dialog);
-        public void onExitGameDialogNegativeClick(DialogFragment dialog);
+        public void onDialogPositiveClick(DialogFragment dialog);
+        public void onDialogNegativeClick(DialogFragment dialog);
     }
 
     // Use this instance of the interface to deliver action events
@@ -56,14 +56,14 @@ public class ExitGameDialogFragment extends DialogFragment {
         view.findViewById(R.id.exitDialogYes).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onExitGameDialogPositiveClick(ExitGameDialogFragment.this);
+                mListener.onDialogPositiveClick(ExitGameDialogFragment.this);
                 dismiss();
             }
         });
         view.findViewById(R.id.exitDialogNo).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onExitGameDialogNegativeClick(ExitGameDialogFragment.this);
+                mListener.onDialogNegativeClick(ExitGameDialogFragment.this);
                 dismiss();
             }
         });
