@@ -3,13 +3,13 @@
     package="ru.bstu.checkers">
 
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        android:name=".MyApplication">
+        android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait">
@@ -25,8 +25,9 @@
         <activity
             android:name=".PreferencesActivity"
             android:label="@string/label_PreferencesActivity"
-            android:screenOrientation="portrait"></activity>
-        <activity android:name=".AnimatedActivity"></activity>
+            android:screenOrientation="portrait" />
+        <activity android:name=".AnimatedActivity" />
+        <activity android:name=".HandmadeActivity"></activity>
     </application>
 
 </manifest>

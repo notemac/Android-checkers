@@ -50,7 +50,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 startActivity(new Intent(this, GameActivity.class));
                 break;
             case R.id.menu_loadgame:
-                startActivity(new Intent(this, AnimatedActivity.class));
+                //startActivity(new Intent(this, AnimatedActivity.class));
+                startActivity(new Intent(this, HandmadeActivity.class));
                 break;
             case R.id.menu_settings:
                 startActivity(new Intent(this, PreferencesActivity.class));
