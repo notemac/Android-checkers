@@ -2,6 +2,8 @@
     <!-- MANIFEST -->
     <string name="app_name">Checkers</string>
     <string name="label_PreferencesActivity">Settings</string>
+    <string name="label_NewSavedGameActivity">Save game</string>
+    <string name="label_LoadGameActivity">Load game</string>
     <!-- draughts_set_preference.xml -->
     <string name="text_tv_dsp_title">Draughts</string>
     <string name="text_tv_dsp_summary">Brown-White set</string>
@@ -31,7 +33,6 @@
     <string name="idBlackKing">idBlackKing</string>
     <string name="idWhiteKing">idWhiteKing</string>
 
-
     <string name="exitDialog">EGDF</string>
     <string name="exitDialogTitle">Exit game?</string>
     <string name="exitDialogYes">Yes</string>
@@ -51,5 +52,5 @@
         <item>draughts_set2</item>
     </string-array>
 
-
+    <string name="hint_inputGameName">"Game name..."</string>
 </resources>

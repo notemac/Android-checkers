@@ -1,8 +1,15 @@
 <resources>
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="android:Theme.Material.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+
+     <style name="AppTheme" parent="android:Theme.Material.Light.DarkActionBar">
         <item name="android:windowBackground">@drawable/windows_background</item>
+    </style>
+
+    <!-- Тема без ActionBar для LoadGameActivity, которая наследует AppCompactActivity,
+        чтобы приложение не крашилось при запуске LoadGameActivity. -->
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
     </style>
 
     <!-- activity_game.xml-->

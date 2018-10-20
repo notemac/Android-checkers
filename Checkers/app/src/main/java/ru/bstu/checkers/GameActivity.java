@@ -14,13 +14,19 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
+import ru.bstu.checkers.roomdb.Game;
+import ru.bstu.checkers.roomdb.GameViewModel;
+
 public class GameActivity extends Activity
         implements View.OnClickListener, ExitGameDialogFragment.NoticeDialogListener,
                 GameOverDialogFragment.NoticeDialogListener{
 
+    public static final int NEW_SAVED_GAME_ACTIVITY_REQUEST_CODE = 1;
+
     String draughtsSet;
     GameEngine gameEngine;
 
+    private GameViewModel mGameViewModel;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,6 +49,8 @@ public class GameActivity extends Activity
         draughtsSet = preferences.getString(resources.getString(R.string.selectedDraughtsSet),
                 resources.getString(R.string.defaultDraughtsSet));
         gameEngine.LoadDraughtsSet();
+
+        mGameViewModel = new GameViewModel(MyApplication.getInstance());
     }
 
     @Override
@@ -91,8 +99,10 @@ public class GameActivity extends Activity
                 startActivity(intent);
                 return true;
             case R.id.actionbar_savegame:
-                Toast.makeText(this, "Game saved!", Toast.LENGTH_LONG).show();
-                return  true;
+                intent = new Intent(this, NewSavedGameActivity.class);
+                startActivityForResult(intent, NEW_SAVED_GAME_ACTIVITY_REQUEST_CODE);
+                //Toast.makeText(this, "Game saved!", Toast.LENGTH_LONG).show();
+                return true;
             case R.id.actionbar_exitgame:
                 ExitGameDialogFragment dialog = new ExitGameDialogFragment();
                 dialog.show(getFragmentManager(), getResources().getString(R.string.exitDialog));
@@ -102,6 +112,17 @@ public class GameActivity extends Activity
         }
     }
 
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == NEW_SAVED_GAME_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
+            //СОХРАНЯЕМ ИГРУ
+            //Word word = new Word(data.getStringExtra(NewWordActivity.EXTRA_REPLY));
+            //mWordViewModel.insert(word);
+            Game game = new Game(data.getStringExtra(NewSavedGameActivity.EXTRA_REPLY), 0);
+            mGameViewModel.insert(game);
+        }
+    }
 
     @Override
     public void onClick(View v)

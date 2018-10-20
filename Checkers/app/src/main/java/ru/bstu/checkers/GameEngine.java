@@ -4,15 +4,11 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.ImageButton;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 
 

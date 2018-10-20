@@ -27,7 +27,14 @@
             android:label="@string/label_PreferencesActivity"
             android:screenOrientation="portrait" />
         <activity android:name=".AnimatedActivity" />
-        <activity android:name=".HandmadeActivity"></activity>
+        <activity android:name=".HandmadeActivity" />
+        <activity
+            android:name=".NewSavedGameActivity"
+            android:label="@string/label_NewSavedGameActivity"
+            android:screenOrientation="portrait" />
+        <activity android:name=".LoadGameActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/label_LoadGameActivity"></activity>
     </application>
 
 </manifest>

@@ -21,7 +21,8 @@ public class Item {
                 boolean ultraWayA5D8, boolean ultraWayH4D8, boolean ultraWayE1A5, boolean ultraWayE1H4,
                 boolean goldWay)
     {
-        this.id = id; this.type = type;
+        this.id = id;
+        this.type = type;
         this.isKing = false;
         ways = new boolean[WAYS_COUNT];
         ways[0] = doubleWayG1A7; ways[1] = doubleWayH2B8; ways[2] = doubleWayG1H2;
