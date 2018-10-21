@@ -13,7 +13,7 @@
         <ru.bstu.checkers.DraughtsSetPreferenceEngine
             android:entries="@array/iconNames"
             android:entryValues="@array/iconFiles"
-            android:key="@string/custom_icon_key"
+            android:key="@string/selectedDraughtsSet"
             android:layout="@layout/draughts_set_preference"
             android:title="@string/title_draughts_set_preference" />
     <!-- </PreferenceCategory> -->

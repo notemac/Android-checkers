@@ -2,6 +2,8 @@
     <!-- MANIFEST -->
     <string name="app_name">Checkers</string>
     <string name="label_PreferencesActivity">Settings</string>
+    <string name="label_NewSavedGameActivity">Save game</string>
+    <string name="label_LoadGameActivity">Load game</string>
     <!-- draughts_set_preference.xml -->
     <string name="text_tv_dsp_title">Draughts</string>
     <string name="text_tv_dsp_summary">Brown-White set</string>
@@ -21,10 +23,28 @@
     <string name="text_tv_player2_name">Player 2</string>
 
     <!--Имя дефолтной иконки для отображения в ListPreferences-->
-    <string name="default_icon_file">draughts_set1</string>
+    <string name="defaultDraughtsSet">draughts_set1</string>
     <!--Ключ (имя иконки) для доступа к имени файла выбранной иконки в настройках приложения-->
-    <string name="custom_icon_key">customIconKey</string>
+    <string name="selectedDraughtsSet">customIconKey</string>
 
+
+    <string name="idBlackDraught">idBlackDraught</string>
+    <string name="idWhiteDraught">idWhiteDraught</string>
+    <string name="idBlackKing">idBlackKing</string>
+    <string name="idWhiteKing">idWhiteKing</string>
+
+    <string name="exitDialog">EGDF</string>
+    <string name="exitDialogTitle">Exit game?</string>
+    <string name="exitDialogYes">Yes</string>
+    <string name="exitDialogNo">No</string>
+
+    <string name="DLSGDialog">DLSGD</string>
+    <string name="DLSGDialogTitle">Choose action:</string>
+    <string name="DLSGDialogDelete">Delete</string>
+    <string name="DLSGDialogLoad">Load</string>
+
+    <string name="gameOverDialog">GODF</string>
+    <string name="winner">winner</string>
 
     <!--Список имен иконок (т.е. ключи entries) -->
     <string-array name="iconNames">
@@ -36,4 +56,6 @@
         <item>draughts_set1</item>
         <item>draughts_set2</item>
     </string-array>
+
+    <string name="hint_inputGameName">"Game name..."</string>
 </resources>

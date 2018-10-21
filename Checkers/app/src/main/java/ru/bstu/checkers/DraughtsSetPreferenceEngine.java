@@ -4,6 +4,8 @@ package ru.bstu.checkers;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.preference.ListPreference;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
@@ -24,6 +26,7 @@ import java.util.List;
 
 
 public class DraughtsSetPreferenceEngine extends ListPreference {
+
     /**
      * Контейнер для хранения информации о внутренностях элемента кастомного списка. Содержит
      * переменную для отображения иконки iconImage:ImageView, чекбокса radioButton:RadioButton, индекс в списке position:int.
@@ -64,7 +67,7 @@ public class DraughtsSetPreferenceEngine extends ListPreference {
         this.context = context;
         this.resources = context.getResources();
         this.preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        this.defaultIconFile = this.resources.getString(R.string.default_icon_file);
+        this.defaultIconFile = this.resources.getString(R.string.defaultDraughtsSet);
     }
     /**Дескриптор контекста приложения*/
     private Context context;
@@ -99,7 +102,7 @@ public class DraughtsSetPreferenceEngine extends ListPreference {
     protected void onBindView(View view) {
         super.onBindView(view);
         //Извлекаем имя файла выбранной иконки
-        selectedIconFile = preferences.getString(resources.getString(R.string.custom_icon_key), defaultIconFile);
+        selectedIconFile = preferences.getString(resources.getString(R.string.selectedDraughtsSet), defaultIconFile);
         //Обновляем выбранную иконку и ее краткое описание
         icon = (ImageView) view.findViewById(R.id.ii_dsp_iconImageSelected);
         updateIcon();
@@ -137,7 +140,6 @@ public class DraughtsSetPreferenceEngine extends ListPreference {
                 LayoutInflater inflater = (LayoutInflater) context
                         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView = inflater.inflate(resource, parent, false);
-
                 holder = new ViewHolder();
                 // holder.iconName = (TextView) convertView.findViewById(R.id.iconName);
                 holder.iconImage = (ImageView) convertView.findViewById(R.id.iv_dsp_iconImage);
@@ -196,9 +198,7 @@ public class DraughtsSetPreferenceEngine extends ListPreference {
                             + "and an entryValues array which are both the same length");
         }
 
-        String selectedIconFile = preferences.getString(
-                resources.getString(R.string.custom_icon_key),
-                resources.getString(R.string.default_icon_file));
+        String selectedIconFile = preferences.getString( resources.getString(R.string.selectedDraughtsSet),  defaultIconFile);
 
         icons = new ArrayList<IconItem>();
 
@@ -212,6 +212,7 @@ public class DraughtsSetPreferenceEngine extends ListPreference {
         builder.setAdapter(customListPreferenceAdapter, null);
     }
 
+
     /**The method onDialogClosed is called after the dialog box is closed and it saves the choice of the user in the preferences.
      * Настраиваем внешний вид draughts_set_preference.xml согласно текущим настройкам.
      * ПОЗИЦИЯ В ПОРЯДКЕ ВЫЗОВА МЕТОДОВ в рамках PreferencesActivity: №6
@@ -224,7 +225,21 @@ public class DraughtsSetPreferenceEngine extends ListPreference {
                 IconItem item = icons.get(i);
                 if (item.isChecked) {
                     Editor editor = preferences.edit();
-                    editor.putString(resources.getString(R.string.custom_icon_key), item.file);
+                    if (item.file.equals(getEntryValues()[0]))
+                    {
+                        editor.putInt(resources.getString(R.string.idBlackDraught), R.drawable.black_draught);
+                        editor.putInt(resources.getString(R.string.idWhiteDraught), R.drawable.white_draught);
+                        editor.putInt(resources.getString(R.string.idBlackKing), R.drawable.black_king);
+                        editor.putInt(resources.getString(R.string.idWhiteKing), R.drawable.white_king);
+                    }
+                    else
+                    {
+                        editor.putInt(resources.getString(R.string.idBlackDraught), R.drawable.black_draught2);
+                        editor.putInt(resources.getString(R.string.idWhiteDraught), R.drawable.white_draught2);
+                        editor.putInt(resources.getString(R.string.idBlackKing), R.drawable.black_king2);
+                        editor.putInt(resources.getString(R.string.idWhiteKing), R.drawable.white_king2);
+                    }
+                    editor.putString(resources.getString(R.string.selectedDraughtsSet), item.file);
                     editor.commit();
                     //Обновляем выбранную иконку и ее краткое описание
                     selectedIconFile = item.file;

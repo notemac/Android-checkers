@@ -1,8 +1,15 @@
 <resources>
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="android:Theme.Material.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+
+     <style name="AppTheme" parent="android:Theme.Material.Light.DarkActionBar">
         <item name="android:windowBackground">@drawable/windows_background</item>
+    </style>
+
+    <!-- Тема без ActionBar для LoadGameActivity, которая наследует AppCompactActivity,
+        чтобы приложение не крашилось при запуске LoadGameActivity. -->
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
     </style>
 
     <!-- activity_game.xml-->
@@ -11,41 +18,20 @@
         <item name="android:layout_height">match_parent</item>
         <item name="android:layout_weight">1</item>
     </style>
-    <!-- Если не получится задать атрибут android:src у ImageButton динамически, используя
-     drawable-селекторы состояния, то работаем с android:background
-    <style name="BaseSquare">
-        <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">40dp</item>
-        <item name="android:padding">0dp</item>
-        <item name="android:scaleType">fitXY</item>
-        <item name="android:adjustViewBounds">true</item>
-        <item name="android:layout_weight">1</item>
-    </style>
-
-    <style name="WhiteSquare" parent="BaseSquare">
-        <item name="android:background">@drawable/white_square</item>
-    </style>
-    <style name="BlackSquare" parent="BaseSquare">
-        <item name="android:background">@drawable/black_square</item>
-    </style>
-    <style name="WhiteDraught" parent="BaseSquare">
-        <item name="android:background">@drawable/white_draught</item>
-    </style>
-    <style name="BlackDraught" parent="BaseSquare">
-        <item name="android:background">@drawable/black_draught</item>
-    </style> -->
 
     <style name="BaseSquare">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:padding">0dp</item>
+        <item name="android:padding">1.5dp</item>
         <item name="android:scaleType">fitXY</item>
         <item name="android:adjustViewBounds">true</item>
         <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/black_square</item>
     </style>
 
     <style name="WhiteSquare" parent="BaseSquare">
         <item name="android:src">@drawable/white_square</item>
+        <item name="android:padding">0dp</item>
     </style>
     <style name="BlackSquare" parent="BaseSquare">
         <item name="android:src">@drawable/black_square</item>
@@ -107,6 +93,18 @@
         <item name="android:gravity">center</item>
         <item name="android:textColor">@color/menu_item_color</item>
         <item name="android:textSize">40sp</item>
+        <item name="android:textStyle">bold|italic</item>
+    </style>
+
+    <!-- dialog_exitgame.xml-->
+    <style name="ExitDialogItem">
+        <item name="android:layout_width">150dp</item>
+        <item name="android:layout_height">50dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:background">@drawable/dialog_item</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/menu_item_color</item>
+        <item name="android:textSize">30sp</item>
         <item name="android:textStyle">bold|italic</item>
     </style>
 </resources>

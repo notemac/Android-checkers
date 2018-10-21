@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,11 +27,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        /**Resources res = getResources();
-        TypedArray icons = res.obtainTypedArray(R.array.a8);
-        Drawable drawable = icons.getDrawable(0);*/
-
 
         findViewById(R.id.menu_newgame).setOnClickListener(this);
         findViewById(R.id.menu_loadgame).setOnClickListener(this);
@@ -55,7 +51,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 startActivity(new Intent(this, GameActivity.class));
                 break;
             case R.id.menu_loadgame:
-                startActivity(new Intent(this, AnimatedActivity.class));
+                //startActivity(new Intent(this, AnimatedActivity.class));
+                startActivity(new Intent(this, LoadGameActivity.class));
                 break;
             case R.id.menu_settings:
                 startActivity(new Intent(this, PreferencesActivity.class));
@@ -65,19 +62,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 //android.os.Process.killProcess(android.os.Process.myPid());
                 //System.exit(1);
                 break;
-            /*case R.id.ttt:
-                if (tv.isClickable())
-                    tv.setClickable(false);
-                Toast.makeText(this, "!!!!!", Toast.LENGTH_LONG).show();*/
-                //else  tv.setClickable(true);
-                //ib.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP); СОЗДАЕТ РАМКУ ВОКРУГ КАРТИНКИ
-                //ib.setColorFIlter(null) = undo = ib.ClearColorFilter
-                //tv.setSelected(true);
-                //tv.setPressed(true);
-                //tv.setBackgroundTintMode();
-               // tv.setTextColor(getResources().getColor(android.R.color.white, null));
-                //.setImageResource(R.drawable.c116);
-               // break;
         }
     }
 }
