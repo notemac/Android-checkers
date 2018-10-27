@@ -119,24 +119,10 @@ public class GameActivity extends Activity
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if (requestCode == NEW_SAVED_GAME_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
             //СОХРАНЯЕМ ИГРУ
             Game game = new Game(data.getStringExtra(NewSavedGameActivity.EXTRA_REPLY), gameEngine.turn.ordinal());
-            ArrayList<ru.bstu.checkers.roomdb.Item>[] ways = new ArrayList[Item.WAYS_COUNT];
-            for (int i = 0; i < ways.length; ++i)
-                ways[i] = new ArrayList<ru.bstu.checkers.roomdb.Item>(8);// Максимум 8 клеток/шашек на одной диагонали
-            for (int i = 0; i < gameEngine.ways.length; ++i)
-            {
-                ArrayList<Item> items = gameEngine.ways[i];
-                for (int j = 0; j < items.size(); ++j)
-                {
-                    Item item = items.get(j);
-                    ArrayList<Integer> idx = item.GetWaysIdx();
-                    ways[i].add(new ru.bstu.checkers.roomdb.Item(item.id, item.type.ordinal(), item.isKing, idx));
-                }
-            }
-            mGameViewModel.insert(game, ways);
+            mGameViewModel.insert(game, Utility.CreateObjectForDatabaseInsert(gameEngine.ways));
         }
     }
 

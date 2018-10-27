@@ -1,13 +1,22 @@
 package ru.bstu.checkers.roomdb;
 
 import android.arch.persistence.db.SupportSQLiteDatabase;
-import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Database;
 import android.arch.persistence.room.Room;
 import android.arch.persistence.room.RoomDatabase;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+
+import ru.bstu.checkers.GameEngine;
+import ru.bstu.checkers.Utility;
+import ru.bstu.checkers.Item.ITEM_TYPE;
 
 /**
  * Annotate the class to be a Room database, declare the entities that belong in the database
@@ -31,6 +40,7 @@ public abstract class MyRoomDatabase extends RoomDatabase {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                             MyRoomDatabase.class, "my_database")
+                            .addCallback(sRoomDatabaseCallback)
                             .build(); //.addCallback(sRoomDatabaseCallback).build()
                 }
             }
@@ -45,29 +55,41 @@ public abstract class MyRoomDatabase extends RoomDatabase {
      * you create a RoomDatabase.Callback and override onOpen(). Because you cannot do Room
      * database operations on the UI thread, onOpen() creates and executes an AsyncTask to add content to the database.
      */
-    /*private static RoomDatabase.Callback sRoomDatabaseCallback =
+    private static RoomDatabase.Callback sRoomDatabaseCallback =
             new RoomDatabase.Callback() {
                 @Override
                 public void onOpen (@NonNull SupportSQLiteDatabase db){
                     super.onOpen(db);
-                    new PopulateDbAsync(INSTANCE).execute();
+                }
+                /** Инициализируем БД при ее создании позицией из файла INIT_DB_STATE.json */
+                @Override
+                public void onCreate(@NonNull SupportSQLiteDatabase db) {
+                    super.onCreate(db);
+                    try {
+                        ArrayList<ru.bstu.checkers.Item>[] ways = GameEngine.GetDefaultPosition();
+                        for(int i = 0; i < ways.length; ++i) {
+                            for(int j = 0; j < ways[i].size(); ++j) {
+                                // Убираем все шашки с доски
+                                ways[i].get(j).type = ITEM_TYPE.square;
+                            }
+                        }
+
+                        JSONObject json = Utility.ParseJSONData("INIT_DB_STATE.json");
+                        String gameName  = json.getString("game_name");
+                        int turn = ITEM_TYPE.valueOf(json.getString("turn")).ordinal();
+                        JSONArray items = json.getJSONArray("items");
+                        for(int i = 0; i < items.length(); ++i) {
+                            JSONObject item = items.getJSONObject(i);
+                            int way1_idx = item.getInt("way1");
+                            int idx_in_way1 = item.getInt("idx_in_way1");
+                            ways[way1_idx].get(idx_in_way1).type = ITEM_TYPE.valueOf(item.getString("type"));
+                            ways[way1_idx].get(idx_in_way1).isKing = item.getBoolean("king");
+                        }
+                        new MyRepository.insertAsyncTask(new Game(gameName, turn),
+                                INSTANCE.gameDao(), INSTANCE.positionDao(), INSTANCE.wayDao(), INSTANCE.itemDao(),
+                                Utility.CreateObjectForDatabaseInsert(ways)).execute();
+                    }
+                    catch (JSONException ex) { };
                 }
             };
-
-    private static class PopulateDbAsync extends AsyncTask<Void, Void, Void> {
-
-        private final GameDao mDao;
-
-        PopulateDbAsync(MyRoomDatabase db) {
-            mDao = db.gameDao();
-        }
-
-        @Override
-        protected Void doInBackground(final Void... params) {
-            //mDao.deleteAll();
-            //Word word = new Word("Hello");
-            //mDao.insert(word);
-            return null;
-        }
-    }*/
 }

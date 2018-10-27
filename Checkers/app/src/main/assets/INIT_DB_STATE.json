@@ -1,0 +1,8 @@
+{
+  "game_name": "My first game",
+  "turn": "white",
+  "items": [
+    {"type": "white", "king": false, "way1": 12, "idx_in_way1": 0},
+    {"type": "black", "king": false, "way1": 12, "idx_in_way1": 7}
+  ]
+}

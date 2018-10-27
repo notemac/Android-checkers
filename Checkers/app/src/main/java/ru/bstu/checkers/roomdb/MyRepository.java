@@ -6,9 +6,7 @@ import android.arch.lifecycle.LiveData;
 import android.content.Intent;
 import android.os.AsyncTask;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import ru.bstu.checkers.GameActivity;
@@ -70,7 +68,7 @@ public class MyRepository {
     public void insert (Game game, ArrayList<Item>[] ways) {
         new insertAsyncTask(game, mGameDao, mPositionDao, mWayDao, mItemDao, ways).execute();
     }
-    private static class insertAsyncTask extends AsyncTask<Void, Void, Void> {
+    public static class insertAsyncTask extends AsyncTask<Void, Void, Void> {
         private Game mGame;
         private GameDao mAsyncGameDao;
         private PositionDao mAsyncPositionDao;

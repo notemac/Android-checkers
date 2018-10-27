@@ -145,25 +145,8 @@ public class GameEngine {
         }
     }
 
-    public void Init() {
-        prevMove = new PrevMove();
-        selectedFirstItem = selectedSecondItem = null;
-        isJump = isMove = isNeedSecondClick = false;
-        turn = ITEM_TYPE.white;
-
-        kingSquares = new int[2][4];
-        kingSquares[0][0] = R.id.a1;
-        kingSquares[0][1] = R.id.c1;
-        kingSquares[0][2] = R.id.e1;
-        kingSquares[0][3] = R.id.g1;
-        kingSquares[1][0] = R.id.b8;
-        kingSquares[1][1] = R.id.d8;
-        kingSquares[1][2] = R.id.f8;
-        kingSquares[1][3] = R.id.h8;
-        final int DRAUGHTS_COUNT = 12;// Количество шашек одного цвета
-        moves = new ArrayList<LinkedList<Item>>(DRAUGHTS_COUNT);
-        jumps = new LinkedList<LinkedList<Item>>();
-        Item[] items = new Item[DRAUGHTS_COUNT * 2 + 4 * 6 + 16];// 64 клетки
+    public static ArrayList<Item>[] GetDefaultPosition() {
+        Item[] items = new Item[64];// 64 клетки
         items[0] = new Item(R.id.a8, ITEM_TYPE.square, false, false, false, false,
                 false, false, false, false, false,
                 false, false, false, false); //A8
@@ -364,6 +347,7 @@ public class GameEngine {
                 false, false, false, false, false,
                 false, false, false, false); //H1
 
+        ArrayList<Item>[] ways;
         ways = new ArrayList[Item.WAYS_COUNT];
         for (int i = 0; i < ways.length; ++i)
             ways[i] = new ArrayList<Item>(8);// Максимум 8 клеток/шашек на одной диагонали
@@ -373,6 +357,28 @@ public class GameEngine {
                 if (items[i].ways[j]) ways[j].add(items[i]);
 
         items = null;
+        return ways;
+    }
+
+    public void Init() {
+        prevMove = new PrevMove();
+        selectedFirstItem = selectedSecondItem = null;
+        isJump = isMove = isNeedSecondClick = false;
+        turn = ITEM_TYPE.white;
+
+        kingSquares = new int[2][4];
+        kingSquares[0][0] = R.id.a1;
+        kingSquares[0][1] = R.id.c1;
+        kingSquares[0][2] = R.id.e1;
+        kingSquares[0][3] = R.id.g1;
+        kingSquares[1][0] = R.id.b8;
+        kingSquares[1][1] = R.id.d8;
+        kingSquares[1][2] = R.id.f8;
+        kingSquares[1][3] = R.id.h8;
+        final int DRAUGHTS_COUNT = 12;// Количество шашек одного цвета
+        moves = new ArrayList<LinkedList<Item>>(DRAUGHTS_COUNT);
+        jumps = new LinkedList<LinkedList<Item>>();
+        ways = GetDefaultPosition();
 
         if (turn == Item.ITEM_TYPE.white) {
             MyApplication.getCurrentActivity().findViewById(R.id.iv_timer1).setVisibility(View.VISIBLE);

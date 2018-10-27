@@ -2,24 +2,9 @@ package ru.bstu.checkers;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import org.w3c.dom.Text;
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
@@ -32,6 +17,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         findViewById(R.id.menu_loadgame).setOnClickListener(this);
         findViewById(R.id.menu_settings).setOnClickListener(this);
         findViewById(R.id.menu_exitapp).setOnClickListener(this);
+
     }
 
     @Override
