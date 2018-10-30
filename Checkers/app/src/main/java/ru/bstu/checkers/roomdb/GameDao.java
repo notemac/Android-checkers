@@ -5,6 +5,7 @@ import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.OnConflictStrategy;
 import android.arch.persistence.room.Query;
+import android.database.Cursor;
 
 import java.util.List;
 
@@ -17,8 +18,11 @@ public interface GameDao {
     int delete(String gameName);
 
     @Query("SELECT * from game_table WHERE name = :gameName")
-    Game getGame(String gameName);
+    Game getGame_v2(String gameName);
+
+    @Query("SELECT * from game_table WHERE name = :gameName")
+    Cursor getGame(String gameName);
 
     @Query("SELECT * from game_table ORDER BY name ASC")
-    LiveData<List<Game>> getAllGames();
+    Cursor getAllGames();
 }

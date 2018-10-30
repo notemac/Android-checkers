@@ -1,11 +1,10 @@
 package ru.bstu.checkers.roomdb;
 
-import android.arch.lifecycle.LiveData;
+
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.Query;
-
-import java.util.List;
+import android.database.Cursor;
 
 @Dao
 public interface PositionDao {
@@ -16,5 +15,8 @@ public interface PositionDao {
     int delete(String gameName);
 
     @Query("SELECT * from position_table WHERE game_name = :gameName")
-    Position getPosition(String gameName);
+    Position getPosition_v2(String gameName);
+
+    @Query("SELECT * from position_table WHERE game_name = :gameName")
+    Cursor getPosition(String gameName);
 }

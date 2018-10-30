@@ -15,6 +15,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 import ru.bstu.checkers.GameEngine;
+import ru.bstu.checkers.MyApplication;
 import ru.bstu.checkers.Utility;
 import ru.bstu.checkers.Item.ITEM_TYPE;
 
@@ -34,7 +35,7 @@ public abstract class MyRoomDatabase extends RoomDatabase {
      * Make the MyRoomDatabase a singleton to prevent having multiple instances of the database opened at the same time.
      * */
     private static volatile MyRoomDatabase INSTANCE;
-    static MyRoomDatabase getDatabase(final Context context) {
+    public static MyRoomDatabase getDatabase(final Context context) {
         if (INSTANCE == null) {
             synchronized (MyRoomDatabase.class) {
                 if (INSTANCE == null) {
@@ -73,7 +74,6 @@ public abstract class MyRoomDatabase extends RoomDatabase {
                                 ways[i].get(j).type = ITEM_TYPE.square;
                             }
                         }
-
                         JSONObject json = Utility.ParseJSONData("INIT_DB_STATE.json");
                         String gameName  = json.getString("game_name");
                         int turn = ITEM_TYPE.valueOf(json.getString("turn")).ordinal();
@@ -85,9 +85,8 @@ public abstract class MyRoomDatabase extends RoomDatabase {
                             ways[way1_idx].get(idx_in_way1).type = ITEM_TYPE.valueOf(item.getString("type"));
                             ways[way1_idx].get(idx_in_way1).isKing = item.getBoolean("king");
                         }
-                        new MyRepository.insertAsyncTask(new Game(gameName, turn),
-                                INSTANCE.gameDao(), INSTANCE.positionDao(), INSTANCE.wayDao(), INSTANCE.itemDao(),
-                                Utility.CreateObjectForDatabaseInsert(ways)).execute();
+                        MyRepository.insert(MyApplication.getCurrentActivity().getContentResolver(),
+                                new Game(gameName, turn), Utility.CreateObjectForDatabaseInsert(ways));
                     }
                     catch (JSONException ex) { };
                 }

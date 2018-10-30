@@ -23,7 +23,10 @@ import java.util.List;
  *There are no database calls from the ViewModel, making the code more testable.
  */
 public class GameViewModel extends AndroidViewModel {
-    //Add a private member variable to hold a reference to the repository.
+    public GameViewModel (Application application) {
+        super(application);
+    }
+    /*//Add a private member variable to hold a reference to the repository.
     private MyRepository mRepository;
     //Add a private LiveData member variable to cache the list of games.
     private LiveData<List<Game>> mAllGames;
@@ -41,5 +44,5 @@ public class GameViewModel extends AndroidViewModel {
         mRepository.insert(game, ways);
     }
     public void delete(String gameName) { mRepository.delete(gameName); }
-    public void load(String gameName) { mRepository.load(gameName); }
+    public void load(String gameName) { mRepository.load(gameName); }*/
 }

@@ -1,17 +1,14 @@
 package ru.bstu.checkers.roomdb;
-
-import android.app.Activity;
 import android.content.Context;
+import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import java.util.List;
 
 import ru.bstu.checkers.DeleteLoadSavedGameDialogFragment;
-import ru.bstu.checkers.ExitGameDialogFragment;
 import ru.bstu.checkers.LoadGameActivity;
 import ru.bstu.checkers.MyApplication;
 import ru.bstu.checkers.R;
@@ -28,7 +25,8 @@ public class GameListAdapter extends RecyclerView.Adapter<GameListAdapter.GameVi
     }
 
     private final LayoutInflater mInflater;
-    private List<Game> mGames; // Cached copy of games
+    //private List<Game> mGames; // Cached copy of games
+    private Cursor mCursor = null;
 
     public GameListAdapter(Context context) { mInflater = LayoutInflater.from(context); }
 
@@ -51,26 +49,25 @@ public class GameListAdapter extends RecyclerView.Adapter<GameListAdapter.GameVi
 
     @Override
     public void onBindViewHolder(GameViewHolder holder, int position) {
-        if (mGames != null) {
-            Game current = mGames.get(position);
-            holder.gameItemView.setText(current.mName);
+        if (mCursor.moveToPosition(position)) {
+            holder.gameItemView.setText(mCursor.getString(mCursor.getColumnIndexOrThrow(Game.COLUMN_NAME)));
         } else {
             // Covers the case of data not being ready yet.
-            holder.gameItemView.setText("No Game");
         }
     }
 
-    public void setGames(List<Game> games){
-        mGames = games;
+    public void setGames(Cursor cursor){
+        //mGames = games;
+        mCursor = cursor;
         notifyDataSetChanged();
     }
 
     // getItemCount() is called many times, and when it is first called,
-    // mGames has not been updated (means initially, it's null, and we can't return null).
+    // mCursor has not been updated (means initially, it's null, and we can't return null).
     @Override
     public int getItemCount() {
-        if (mGames != null)
-            return mGames.size();
-        else return 0;
+        return (null == mCursor) ? 0 : mCursor.getCount();
+        /*if (mGames != null) return mGames.size();
+        else return 0;*/
     }
 }

@@ -4,12 +4,16 @@ import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-@Entity(tableName = "item_table")
-public class Item {
+@Entity(tableName = Item.TABLE_NAME)
+public class Item implements Serializable {
+    public static final String TABLE_NAME = "item_table";
+    public static final String COLUMN_ID_NAME = "id";
+    public static final String ENTRY_KEY = "item_entry";
     @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "id")
+    @ColumnInfo(name = COLUMN_ID_NAME)
     public long mId;
 
     @ColumnInfo(name = "view_id")

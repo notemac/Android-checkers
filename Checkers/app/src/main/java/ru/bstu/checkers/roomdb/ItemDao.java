@@ -11,8 +11,8 @@ public interface ItemDao {
     @Insert
     long insert(Item item);
 
-    @Query("DELETE FROM item_table WHERE id = :id")
-    void delete(long id);
+    @Query("DELETE FROM item_table WHERE id = :id AND id <> 0")
+    int delete(long id);
 
     @Query("DELETE FROM item_table WHERE id IN (:ids) AND id <> 0")
     int delete(List<Long> ids);

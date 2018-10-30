@@ -3,7 +3,11 @@ package ru.bstu.checkers.roomdb;
 import android.app.Activity;
 import android.app.Application;
 import android.arch.lifecycle.LiveData;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 
 import java.util.ArrayList;
@@ -12,6 +16,8 @@ import java.util.List;
 import ru.bstu.checkers.GameActivity;
 import ru.bstu.checkers.LoadGameActivity;
 import ru.bstu.checkers.MyApplication;
+import ru.bstu.checkers.MyContentProvider;
+import ru.bstu.checkers.Utility;
 
 
 /**
@@ -24,120 +30,115 @@ import ru.bstu.checkers.MyApplication;
  * to fetch data from a network or use results cached in a local database.
  */
 public class MyRepository {
-    //Add member variables for the DAO and the list of games.
-    private GameDao mGameDao;
-    private LiveData<List<Game>> mAllGames;
-    private PositionDao mPositionDao;
-    private WayDao mWayDao;
-    private ItemDao mItemDao;
-
-    MyRepository(Application application) {
-        MyRoomDatabase db = MyRoomDatabase.getDatabase(application);
-        mGameDao = db.gameDao();
-        mPositionDao = db.positionDao();
-        mWayDao = db.wayDao();
-        mItemDao = db.itemDao();
-        mAllGames = mGameDao.getAllGames();
-    }
-
-    //Add a wrapper for getAllWords(). Room executes all queries on a separate thread.
-    //Observed LiveData will notify the observer when the data has changed.
-    LiveData<List<Game>> getAllGames() {
-        return mAllGames;
-    }
-
-
-    private static void delete(String gameName, GameDao mAsyncGameDao,
-                               PositionDao mAsyncPositionDao, WayDao mAsyncWayDao, ItemDao mAsyncItemDao) {
-        int res;
-        // Удаляем запись в game_table
-        res = mAsyncGameDao.delete(gameName);
-        Position position = mAsyncPositionDao.getPosition(gameName);
-        // Удаляем запись в position_table
-        res = mAsyncPositionDao.delete(gameName);
-        List<Way> ways = mAsyncWayDao.getWays(position.GetWaysId());
-        // Удаляем записи в way_table
-        res = mAsyncWayDao.delete(position.GetWaysId());
-        // Удаляем записи в item_table
-        for(int i = 0; i < ways.size(); ++i)
-            res = mAsyncItemDao.delete(ways.get(i).GetItemsId());
-    }
+    MyRepository(Application application) { }
 
     //Add a wrapper for the insert() method. You must call this on a non-UI thread or your app will crash.
     //Room ensures that you don't do any long-running operations on the main thread, blocking the UI.
-    public void insert (Game game, ArrayList<Item>[] ways) {
-        new insertAsyncTask(game, mGameDao, mPositionDao, mWayDao, mItemDao, ways).execute();
+    public static void insert(ContentResolver resolver, Game game, ArrayList<ru.bstu.checkers.roomdb.Item>[] ways) {
+        new insertAsyncTask(resolver, game, ways).execute();
     }
-    public static class insertAsyncTask extends AsyncTask<Void, Void, Void> {
+    private static class insertAsyncTask extends AsyncTask<Void, Void, Void> {
+        private ContentResolver mResolver;
         private Game mGame;
-        private GameDao mAsyncGameDao;
-        private PositionDao mAsyncPositionDao;
-        private WayDao mAsyncWayDao;
-        private ItemDao mAsyncItemDao;
-        private ArrayList<Item>[] ways;
-        insertAsyncTask(Game game, GameDao gDao, PositionDao pDao, WayDao wDao, ItemDao iDao, ArrayList<Item>[] ways)
-        {
-            mGame = game;
-            mAsyncGameDao = gDao;
-            mAsyncPositionDao = pDao;
-            mAsyncWayDao = wDao;
-            mAsyncItemDao = iDao;
-            this.ways = ways;
-        }
+        ArrayList<ru.bstu.checkers.roomdb.Item>[] mWays;
+        insertAsyncTask(ContentResolver resolver, Game game, ArrayList<ru.bstu.checkers.roomdb.Item>[] ways)
+        { mResolver = resolver; mGame = game; mWays = ways; }
         @Override
         protected Void doInBackground(final Void... params) {
-            Game game = mAsyncGameDao.getGame(mGame.mName);
+            Cursor cursor = mResolver.query(Uri.parse(MyContentProvider.URI_GAME + "/" + mGame.mName),
+                    null, null, null,null);
             // Удаляем записи, если игра с таким названием уже имеется
-            if (null != game)
-                delete(mGame.mName, mAsyncGameDao, mAsyncPositionDao, mAsyncWayDao, mAsyncItemDao);
+            if (cursor.getCount() > 0)
+                delete(mGame.mName, mResolver);
+            cursor.close();
+
             // Добавляем запись в таблицу game_table
-            mAsyncGameDao.insert(mGame);
+            ContentValues cv = new ContentValues();
+            cv.put(Game.ENTRY_KEY, Utility.ToByteArray(mGame));
+            // Добавляем запись в таблицу game_table
+            mResolver.insert(MyContentProvider.URI_GAME, cv);
+            cv.clear();
             final int WAY_SIZE = 8;
-            ArrayList<Long> waysId = new ArrayList<>(ways.length);
-            for(int i = 0; i < ways.length; ++i)
+            ArrayList<Long> waysId = new ArrayList<>(mWays.length);
+            for(int i = 0; i < mWays.length; ++i)
             {
                 ArrayList<Long> itemsId = new ArrayList<>(WAY_SIZE);
-                // Добавляем в таблицу item_table шашки/клетки текущей диагонали
-                for(int j = 0; j < ways[i].size(); ++j) {
-                    long rowid = mAsyncItemDao.insert(ways[i].get(j));
-                    itemsId.add(rowid);
+                // Добавляем записи в таблицу item_table (т.е. добавляем шашки/клетки текущей диагонали)
+                for(int j = 0; j < mWays[i].size(); ++j) {
+                    cv.put(ru.bstu.checkers.roomdb.Item.ENTRY_KEY, Utility.ToByteArray(mWays[i].get(j)));
+                    long rowID = Long.parseLong((mResolver.insert(MyContentProvider.URI_ITEM, cv)).getLastPathSegment());
+                    cv.clear();
+                    itemsId.add(rowID);
                 }
                 while(itemsId.size() < WAY_SIZE) itemsId.add(0L);
-                // Добавляем в таблицу way_table текущую диагональ
-                long rowid = mAsyncWayDao.insert(new Way(itemsId));
-                waysId.add(rowid);
+                // Добавляем запись в таблицу way_table (т.е. текущую диагональ)
+                cv.put(Way.ENTRY_KEY, Utility.ToByteArray(new Way(itemsId)));
+                long rowID = Long.parseLong((mResolver.insert(MyContentProvider.URI_WAY, cv)).getLastPathSegment());
+                cv.clear();
+                waysId.add(rowID);
             }
             // Добавляем запись в таблицу position_table
-            mAsyncPositionDao.insert(new Position(mGame.mName, waysId));
+            cv.put(Position.ENTRY_KEY, Utility.ToByteArray(new Position(mGame.mName, waysId)));
+            mResolver.insert(MyContentProvider.URI_POSITION, cv);
+            cv.clear();
             return null;
-        }
-    }
-
-    public void delete(String gameName) {
-        new deleteAsyncTask(gameName, mGameDao, mPositionDao, mWayDao, mItemDao).execute();
-    }
-    private static class deleteAsyncTask extends AsyncTask<Void, Void, Void> {
-        private String mGameName;
-        private GameDao mAsyncGameDao;
-        private PositionDao mAsyncPositionDao;
-        private WayDao mAsyncWayDao;
-        private ItemDao mAsyncItemDao;
-        deleteAsyncTask(String gameName, GameDao gDao, PositionDao pDao, WayDao wDao, ItemDao iDao) {
-            mGameName = gameName;
-            mAsyncGameDao = gDao;
-            mAsyncPositionDao = pDao;
-            mAsyncWayDao = wDao;
-            mAsyncItemDao = iDao;
         }
         @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            // Уведомляем курсор, что данные изменились по адресу URI_GAME
+            mResolver.notifyChange(MyContentProvider.URI_GAME, null);
+        }
+    }
+
+    private static void delete(String gameName, ContentResolver resolver) {
+        // Удаляем запись из таблицы game_table
+        int count = resolver.delete(Uri.parse(MyContentProvider.URI_GAME + "/" + gameName), null, null);
+        // Получаем объект Position
+        Cursor cursor = resolver.query(Uri.parse(MyContentProvider.URI_POSITION + "/" + gameName),
+                null, null, null,null);
+        cursor.moveToNext();
+        // Получаем все waysId из Position
+        List<Long> waysId = Position.GetWaysId(cursor);
+        cursor.close();
+        // Удаляем запись из таблицы position_table
+        count = resolver.delete(Uri.parse(MyContentProvider.URI_POSITION + "/" + gameName), null, null);
+        for(int i = 0; i < waysId.size(); ++i) {
+            // Получаем объект Way
+            cursor = resolver.query(Uri.parse(MyContentProvider.URI_WAY + "/" + waysId.get(i).toString()),
+                    null, null, null,null);
+            cursor.moveToNext();
+            // Получаем все itemsId из Way
+            List<Long> itemsId = Way.GetItemsId(cursor);
+            cursor.close();
+            // Удаляем все items для текущего Way
+            for(int j = 0; j < itemsId.size(); ++j) {
+                // Удаляем запись из таблицы item_table
+                count = resolver.delete(Uri.parse(MyContentProvider.URI_ITEM + "/" + itemsId.get(j).toString()),
+                        null, null);
+            }
+            // Удаляем запись из таблицы way_table
+            count = resolver.delete(Uri.parse(MyContentProvider.URI_WAY + "/" + waysId.get(i).toString()),
+                    null, null);
+        }
+    }
+
+    public static void delete(ContentResolver resolver, String gameName) {
+        new deleteAsyncTask(resolver, gameName).execute();
+    }
+    private static class deleteAsyncTask extends AsyncTask<Void, Void, Void> {
+        private ContentResolver mResolver;
+        private String mGameName;
+        deleteAsyncTask(ContentResolver resolver, String gameName) { mResolver = resolver; mGameName = gameName; }
+        @Override
         protected Void doInBackground(final Void... params) {
-            delete(mGameName, mAsyncGameDao, mAsyncPositionDao, mAsyncWayDao, mAsyncItemDao);
+            delete(mGameName, mResolver);
             return null;
         }
     }
 
-    public void load(String gameName) {
-        new loadAsyncTask(gameName, mGameDao, mPositionDao, mWayDao, mItemDao).execute();
+    public static void load(String gameName) {
+        new loadAsyncTask(gameName).execute();
     }
     private static class loadAsyncTask extends AsyncTask<Void, Void, Void> {
         private String mGameName;
@@ -147,12 +148,12 @@ public class MyRepository {
         private ItemDao mAsyncItemDao;
         private ArrayList<ru.bstu.checkers.Item>[] mWays;
         private Game mGame;
-        loadAsyncTask(String gameName, GameDao gDao, PositionDao pDao, WayDao wDao, ItemDao iDao) {
+        loadAsyncTask(String gameName) {
             mGameName = gameName;
-            mAsyncGameDao = gDao;
-            mAsyncPositionDao = pDao;
-            mAsyncWayDao = wDao;
-            mAsyncItemDao = iDao;
+            mAsyncGameDao = MyRoomDatabase.getDatabase(MyApplication.getInstance()).gameDao();
+            mAsyncPositionDao = MyRoomDatabase.getDatabase(MyApplication.getInstance()).positionDao();
+            mAsyncWayDao = MyRoomDatabase.getDatabase(MyApplication.getInstance()).wayDao();
+            mAsyncItemDao = MyRoomDatabase.getDatabase(MyApplication.getInstance()).itemDao();
             mWays = new ArrayList[ru.bstu.checkers.Item.WAYS_COUNT];
             for (int i = 0; i < mWays.length; ++i) // Максимум 8 клеток/шашек на одной диагонали
                 mWays[i] = new ArrayList<ru.bstu.checkers.Item>(8);
@@ -160,7 +161,7 @@ public class MyRepository {
         @Override
         protected Void doInBackground(final Void... params) {
             // Получаем позицию (содержит id диагоналей в БД для выбранной игры)
-            Position position = mAsyncPositionDao.getPosition(mGameName);
+            Position position = mAsyncPositionDao.getPosition_v2(mGameName);
             // Получаем диагонали ways, содержащие id item'ов в БД
             List<Way> _ways = mAsyncWayDao.getWays(position.GetWaysId());
             for (int i = 0; i < _ways.size(); ++i)
@@ -172,7 +173,7 @@ public class MyRepository {
                     Item _item = _items.get(j);
                     ru.bstu.checkers.Item item = new ru.bstu.checkers.Item(_item.mViewId,
                             _item.mType, _item.mKing, _item.mWay1Idx, _item.mWay2Idx);
-                    /* Один и тот же item на разных диагоналях должен быть одним и тем же объектом */
+                    // Один и тот же item на разных диагоналях должен быть одним и тем же объектом
                     LOOP:
                     {
                         for (int q = 0; q < mWays.length; ++q)
@@ -190,10 +191,10 @@ public class MyRepository {
                     mWays[i].add(item);
                 }
             }
-            mGame = mAsyncGameDao.getGame(mGameName);
+            mGame = mAsyncGameDao.getGame_v2(mGameName);
             return null;
         }
-        /** После того как загрузили игру с БД, запускаем GameActivity*/
+        // После того как загрузили игру с БД, запускаем GameActivity
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);

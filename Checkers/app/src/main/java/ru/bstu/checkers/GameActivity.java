@@ -2,30 +2,39 @@ package ru.bstu.checkers;
 
 import android.app.Activity;
 import android.app.DialogFragment;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.List;
 
 import ru.bstu.checkers.roomdb.Game;
 import ru.bstu.checkers.roomdb.GameViewModel;
+import ru.bstu.checkers.roomdb.MyRepository;
+import ru.bstu.checkers.roomdb.Position;
+import ru.bstu.checkers.roomdb.Way;
 
 public class GameActivity extends Activity
         implements View.OnClickListener, ExitGameDialogFragment.NoticeDialogListener,
-                GameOverDialogFragment.NoticeDialogListener{
+                GameOverDialogFragment.NoticeDialogListener {
 
     public static final int NEW_SAVED_GAME_ACTIVITY_REQUEST_CODE = 1;
 
     String draughtsSet;
     GameEngine gameEngine;
 
-    private GameViewModel mGameViewModel;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,7 +66,7 @@ public class GameActivity extends Activity
                 resources.getString(R.string.defaultDraughtsSet));
         gameEngine.LoadDraughtsSet();
 
-        mGameViewModel = new GameViewModel(MyApplication.getInstance());
+        //mGameViewModel = new GameViewModel(MyApplication.getInstance());
     }
 
     @Override
@@ -122,9 +131,11 @@ public class GameActivity extends Activity
         if (requestCode == NEW_SAVED_GAME_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
             //СОХРАНЯЕМ ИГРУ
             Game game = new Game(data.getStringExtra(NewSavedGameActivity.EXTRA_REPLY), gameEngine.turn.ordinal());
-            mGameViewModel.insert(game, Utility.CreateObjectForDatabaseInsert(gameEngine.ways));
+            MyRepository.insert(getContentResolver(), game, Utility.CreateObjectForDatabaseInsert(gameEngine.ways));
         }
     }
+
+
 
     @Override
     public void onClick(View v)
